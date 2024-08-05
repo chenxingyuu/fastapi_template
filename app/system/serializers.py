@@ -1,39 +1,45 @@
 # Pydantic 模型
 from typing import List
 
+from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.system.models import Permission, Role, User
 
-PermissionPydantic = pydantic_model_creator(Permission, exclude=("created_at", "updated_at", "deleted_at"))
-RolePydantic = pydantic_model_creator(Role, exclude=("created_at", "updated_at", "deleted_at"))
-UserPydantic = pydantic_model_creator(User, exclude=("hashed_password",))
+# ===============================================================================================
+# Permission
+# ===============================================================================================
+PermissionDetail = pydantic_model_creator(Permission, name="PermissionDetail")
+PermissionCreate = pydantic_model_creator(Permission, name="PermissionCreate", include=("name", "description"))
+PermissionUpdate = PermissionCreate
+PermissionPatch = PermissionCreate
 
-PermissionCreatePydantic = pydantic_model_creator(
-    Permission, name="PermissionIn", exclude=("id", "created_at", "updated_at", "deleted_at")
-)
-PermissionUpdatePydantic = pydantic_model_creator(Permission, name="PermissionUpdate", exclude_readonly=True)
+# ===============================================================================================
+# Role
+# ===============================================================================================
+RoleDetail = pydantic_model_creator(Role, name="RoleDetail")
+RoleCreate = pydantic_model_creator(Role, name="RoleCreate", include=("name", "description"))
+RoleUpdate = RoleCreate
+RolePatch = RoleCreate
 
-UserCreatePydantic = pydantic_model_creator(
-    User,
-    name="UserIn",
-    exclude=("id", "hashed_password", "created_at", "updated_at", "deleted_at", "is_active", "is_superuser", "roles"),
-)
-UserUpdatePydantic = pydantic_model_creator(User, name="UserUpdate", exclude_readonly=True)
-
-
-class RoleWithPermissionsPydantic(RolePydantic):
-    permissions: List[PermissionPydantic]
-
-
-class UserWithRolePydantic(RolePydantic):
-    roles: List[RolePydantic]
+# ===============================================================================================
+# User
+# ===============================================================================================
+UserDetail = pydantic_model_creator(User, name="UserDetail")
 
 
-class UserWithRolePermissionsPydantic(RolePydantic):
-    roles: List[RolePydantic]
-    permissions: List[PermissionPydantic]
+class UserWithRoleDetail(UserDetail):
+    roles: List[RoleDetail]
 
 
-RoleCreatePydantic = pydantic_model_creator(Role, name="Role", exclude=("id", "created_at", "updated_at", "deleted_at"))
-RoleUpdatePydantic = pydantic_model_creator(Role, name="RoleUpdate", exclude_readonly=True)
+class UserWithPermissionDetail(UserDetail):
+    permissions: List[PermissionDetail]
+
+
+class UserPassword(User):
+    password = fields.CharField(max_length=255)
+
+
+UserCreate = pydantic_model_creator(UserPassword, name="UserCreate", include=("username", "email", "mobile", "password"))
+UserUpdate = pydantic_model_creator(User, name="UserUpdate", exclude=("id", "created_at", "updated_at", "deleted_at"))
+UserPatch = pydantic_model_creator(User, name="UserPatch", exclude=("id", "created_at", "updated_at", "deleted_at"))

@@ -1,9 +1,9 @@
 from tortoise import fields
 
-from cores.model import BaseModel
+from cores.model import Model
 
 
-class User(BaseModel):
+class User(Model):
     username = fields.CharField(max_length=50, unique=True)
     email = fields.CharField(max_length=255, unique=True)
     mobile = fields.CharField(max_length=11, unique=True)
@@ -17,7 +17,7 @@ class User(BaseModel):
         table = "system_users"
 
 
-class Role(BaseModel):
+class Role(Model):
     name = fields.CharField(max_length=50, unique=True)
     description = fields.TextField(null=True)
     permissions = fields.ManyToManyField("models.Permission", related_name="roles", through="sys_role_permissions")
@@ -26,7 +26,7 @@ class Role(BaseModel):
         table = "system_roles"
 
 
-class Permission(BaseModel):
+class Permission(Model):
     name = fields.CharField(max_length=100, unique=True)
     description = fields.TextField(null=True)
 
