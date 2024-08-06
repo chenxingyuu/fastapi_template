@@ -70,7 +70,7 @@ async def update_permission(permission_id: int, permission: PermissionUpdate):
         raise HTTPException(status_code=404, detail=f"Permission {permission_id} not found")
 
     await Permission.get_queryset().filter(id=permission_id).update(**permission.dict(exclude_unset=True))
-    updated_permission = await Permission.get_queryset().get(id=permission_id)
+    updated_permission = Permission.get_queryset().get(id=permission_id)
     response = await PermissionDetail.from_queryset_single(updated_permission)
     return ResponseModel(data=response)
 

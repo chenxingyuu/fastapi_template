@@ -14,6 +14,12 @@ from cores.response import ResponseModel
 user_router = APIRouter()
 
 
+async def validate_user(user_id: int) -> User:
+    if not (user := await User.get_queryset().get_or_none(id=user_id)):
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    return user
+
+
 def generate_password(length: int = 12) -> str:
     alphabet = string.ascii_letters + string.digits + string.punctuation
     password = "".join(secrets.choice(alphabet) for _ in range(length))
@@ -68,7 +74,8 @@ async def get_user(user_id: int):
 
 
 @user_router.put(
-    "/{user_id}", summary="更新用户信息", response_model=ResponseModel[UserDetail], responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}", summary="更新用户信息", response_model=ResponseModel[UserDetail],
+    responses={404: {"model": HTTPNotFoundError}}
 )
 async def update_user(user_id: int, user: UserUpdate):
     """
@@ -85,7 +92,8 @@ async def update_user(user_id: int, user: UserUpdate):
 
 
 @user_router.patch(
-    "/{user_id}", summary="部分更新用户信息", response_model=ResponseModel[UserDetail], responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}", summary="部分更新用户信息", response_model=ResponseModel[UserDetail],
+    responses={404: {"model": HTTPNotFoundError}}
 )
 async def patch_user(user_id: int, user: UserPatch):
     """
@@ -146,26 +154,21 @@ async def get_user_permissions(user_id: int):
     获取指定用户的权限列表。
     - **user_id**: 用户的唯一标识符。
     """
-    user = await User.get_queryset().prefetch_related("permissions").get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     permissions_data = await PermissionDetail.from_queryset(user.permissions.all())
     return ResponseModel(data=permissions_data)
 
 
-# TODO 优化 response_model
 # 用户添加角色
-@user_router.post("/{user_id}/roles", summary="为用户添加角色", response_model=ResponseModel[UserDetail])
+@user_router.post("/{user_id}/roles", summary="为用户添加角色", response_model=ResponseModel[List[RoleDetail]])
 async def add_role_to_user(user_id: int, role_ids: List[int]):
     """
     为用户添加一个或多个角色。
     - **user_id**: 用户的唯一标识符。
     - **role_ids**: 要添加的角色的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        return ResponseModel(code=404, msg=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     roles = await Role.get_queryset().filter(id__in=role_ids).all()
     if len(roles) != len(role_ids):
@@ -173,22 +176,22 @@ async def add_role_to_user(user_id: int, role_ids: List[int]):
         raise HTTPException(status_code=404, detail=f"Roles with IDs {missing_ids} not found")
 
     await user.roles.add(*roles)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    role_data = await RoleDetail.from_queryset(updated_user.roles.all())
+    return ResponseModel(data=role_data)
 
 
-# TODO 优化 response_model
 # 用户修改角色
-@user_router.put("/{user_id}/roles", summary="修改用户角色", response_model=ResponseModel[UserDetail])
+@user_router.put("/{user_id}/roles", summary="修改用户角色", response_model=ResponseModel[List[RoleDetail]])
 async def update_roles_for_user(user_id: int, role_ids: List[int]):
     """
     修改用户的角色（覆盖更新）。
     - **user_id**: 用户的唯一标识符。
     - **role_ids**: 要设置的角色的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     roles = await Role.get_queryset().filter(id__in=role_ids).all()
     if len(roles) != len(role_ids):
@@ -197,22 +200,22 @@ async def update_roles_for_user(user_id: int, role_ids: List[int]):
 
     await user.roles.clear()
     await user.roles.add(*roles)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    role_data = await RoleDetail.from_queryset(updated_user.roles.all())
+    return ResponseModel(data=role_data)
 
 
-# TODO 优化 response_model
 # 用户删除角色
-@user_router.delete("/{user_id}/roles", summary="删除用户角色", response_model=ResponseModel[UserDetail])
+@user_router.delete("/{user_id}/roles", summary="删除用户角色", response_model=ResponseModel[List[RoleDetail]])
 async def delete_roles_from_user(user_id: int, role_ids: List[int]):
     """
     删除用户的一个或多个角色。
     - **user_id**: 用户的唯一标识符。
     - **role_ids**: 要删除的角色的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     roles = await Role.get_queryset().filter(id__in=role_ids).all()
     if len(roles) != len(role_ids):
@@ -220,22 +223,22 @@ async def delete_roles_from_user(user_id: int, role_ids: List[int]):
         raise HTTPException(status_code=404, detail=f"Roles with IDs {missing_ids} not found")
 
     await user.roles.remove(*roles)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    role_data = await RoleDetail.from_queryset(updated_user.roles.all())
+    return ResponseModel(data=role_data)
 
 
-# TODO 优化 response_model
 # 用户添加权限
-@user_router.post("/{user_id}/permissions", summary="为用户添加权限", response_model=ResponseModel[UserDetail])
+@user_router.post("/{user_id}/permissions", summary="为用户添加权限", response_model=ResponseModel[List[PermissionDetail]])
 async def add_permission_to_user(user_id: int, permission_ids: List[int]):
     """
     为用户添加一个或多个权限。
     - **user_id**: 用户的唯一标识符。
     - **permission_ids**: 要添加的权限的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
@@ -243,22 +246,22 @@ async def add_permission_to_user(user_id: int, permission_ids: List[int]):
         raise HTTPException(status_code=404, detail=f"Permissions with IDs {missing_ids} not found")
 
     await user.permissions.add(*permissions)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    permission_data = await PermissionDetail.from_queryset(updated_user.permissions.all())
+    return ResponseModel(data=permission_data)
 
 
-# TODO 优化 response_model
 # 用户删除权限
-@user_router.delete("/{user_id}/permissions", summary="删除用户权限", response_model=ResponseModel[UserDetail])
+@user_router.delete("/{user_id}/permissions", summary="删除用户权限", response_model=ResponseModel[List[PermissionDetail]])
 async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
     """
     删除用户的一个或多个权限。
     - **user_id**: 用户的唯一标识符。
     - **permission_ids**: 要删除的权限的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
@@ -266,22 +269,22 @@ async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
         raise HTTPException(status_code=404, detail=f"Permissions with IDs {missing_ids} not found")
 
     await user.permissions.remove(*permissions)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    permission_data = await PermissionDetail.from_queryset(updated_user.permissions.all())
+    return ResponseModel(data=permission_data)
 
 
-# TODO 优化 response_model
 # 用户修改权限
-@user_router.put("/{user_id}/permissions", summary="修改用户权限", response_model=ResponseModel[UserDetail])
+@user_router.put("/{user_id}/permissions", summary="修改用户权限", response_model=ResponseModel[List[PermissionDetail]])
 async def update_permissions_for_user(user_id: int, permission_ids: List[int]):
     """
     修改用户的权限（覆盖更新）。
     - **user_id**: 用户的唯一标识符。
     - **permission_ids**: 要设置的权限的唯一标识符列表。
     """
-    user = await User.get_queryset().get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    user = await validate_user(user_id)
 
     permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
@@ -290,5 +293,8 @@ async def update_permissions_for_user(user_id: int, permission_ids: List[int]):
 
     await user.permissions.clear()
     await user.permissions.add(*permissions)
-    user_data = await UserDetail.from_queryset_single(User.get_queryset().get(id=user_id))
-    return ResponseModel(data=user_data)
+
+    # 获取更新后的用户数据
+    updated_user = await User.get_queryset().get(id=user_id)
+    permission_data = await PermissionDetail.from_queryset(updated_user.permissions.all())
+    return ResponseModel(data=permission_data)
