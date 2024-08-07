@@ -74,8 +74,7 @@ async def get_user(user_id: int):
 
 
 @user_router.put(
-    "/{user_id}", summary="更新用户信息", response_model=ResponseModel[UserDetail],
-    responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}", summary="更新用户信息", response_model=ResponseModel[UserDetail], responses={404: {"model": HTTPNotFoundError}}
 )
 async def update_user(user_id: int, user: UserUpdate):
     """
@@ -92,8 +91,7 @@ async def update_user(user_id: int, user: UserUpdate):
 
 
 @user_router.patch(
-    "/{user_id}", summary="部分更新用户信息", response_model=ResponseModel[UserDetail],
-    responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}", summary="部分更新用户信息", response_model=ResponseModel[UserDetail], responses={404: {"model": HTTPNotFoundError}}
 )
 async def patch_user(user_id: int, user: UserPatch):
     """

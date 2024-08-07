@@ -22,10 +22,7 @@ class ListPermissionFilterSet(FilterSet):
         return query
 
 
-class ListRoleFilterSet(FilterSet):
-    name: Optional[str] = Field(None, description="name")
-    description: Optional[str] = Field(None, description="description")
-
+class ListRoleFilterSet(ListPermissionFilterSet):
     def apply_filters(self, query: QuerySet[Role] = None) -> QuerySet[Role]:
         if not query:
             query = Role.get_queryset().all()
