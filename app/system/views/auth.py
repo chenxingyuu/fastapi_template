@@ -65,18 +65,21 @@ async def get_current_user(
         raise credentials_exception
 
     for scope in security_scopes.scopes:
-        if scope not in token_data.scopes:
+        for user_scope in token_data.scopes:
+            if scope.startswith(user_scope):
+                break
+        else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Not enough permissions",
                 headers={"WWW-Authenticate": authenticate_value},
             )
 
-    return User(**payload["user"])
+    return user
 
 
 async def get_current_active_user(
-        current_user: User = Security(get_current_user, scopes=["me"]),
+        current_user: User = Security(get_current_user),
 ) -> UserDetail:
     if current_user.is_active:
         return current_user

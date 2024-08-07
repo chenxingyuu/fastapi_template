@@ -1,11 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.filters import ListUserFilterSet
 from app.system.models import Permission, Role, User
 from app.system.serializers import PermissionDetail, RoleDetail, UserCreate, UserDetail, UserPatch, UserUpdate
+from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.pwd import get_password_hash
 from cores.response import ResponseModel
@@ -19,7 +20,12 @@ async def validate_user(user_id: int) -> User:
     return user
 
 
-@user_router.post(path="", summary="创建用户", response_model=ResponseModel[UserDetail])
+@user_router.post(
+    path="",
+    summary="创建用户",
+    response_model=ResponseModel[UserDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:create"])],
+)
 async def create_user(user: UserCreate):
     """
     创建一个新的系统用户。
@@ -31,7 +37,12 @@ async def create_user(user: UserCreate):
     return ResponseModel(data=user_data)
 
 
-@user_router.get("", summary="获取用户列表", response_model=ResponseModel[PageModel[UserDetail]])
+@user_router.get(
+    "",
+    summary="获取用户列表",
+    response_model=ResponseModel[PageModel[UserDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read"])],
+)
 async def list_user(
         user_filter: ListUserFilterSet = Depends(),
         pagination: PaginationParams = Depends(),
@@ -53,6 +64,7 @@ async def list_user(
     summary="获取用户详细信息",
     response_model=ResponseModel[UserDetail],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read"])],
 )
 async def get_user(user_id: int):
     """
@@ -67,8 +79,11 @@ async def get_user(user_id: int):
 
 
 @user_router.put(
-    "/{user_id}", summary="更新用户信息", response_model=ResponseModel[UserDetail],
-    responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}",
+    summary="更新用户信息",
+    response_model=ResponseModel[UserDetail],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update"])],
 )
 async def update_user(user_id: int, user: UserUpdate):
     """
@@ -85,8 +100,11 @@ async def update_user(user_id: int, user: UserUpdate):
 
 
 @user_router.patch(
-    "/{user_id}", summary="部分更新用户信息", response_model=ResponseModel[UserDetail],
-    responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}",
+    summary="部分更新用户信息",
+    response_model=ResponseModel[UserDetail],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update"])],
 )
 async def patch_user(user_id: int, user: UserPatch):
     """
@@ -103,7 +121,11 @@ async def patch_user(user_id: int, user: UserPatch):
 
 
 @user_router.delete(
-    "/{user_id}", summary="删除用户", response_model=ResponseModel[dict], responses={404: {"model": HTTPNotFoundError}}
+    "/{user_id}",
+    summary="删除用户",
+    response_model=ResponseModel[dict],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:delete"])],
 )
 async def delete_user(user_id: int):
     """
@@ -122,6 +144,7 @@ async def delete_user(user_id: int):
     summary="获取用户角色列表",
     response_model=ResponseModel[List],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read", "system:role:read"])],
 )
 async def get_user_roles(user_id: int):
     """
@@ -141,6 +164,7 @@ async def get_user_roles(user_id: int):
     summary="获取用户权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read", "system:permission:read"])],
 )
 async def get_user_permissions(user_id: int):
     """
@@ -154,7 +178,12 @@ async def get_user_permissions(user_id: int):
 
 
 # 用户添加角色
-@user_router.post("/{user_id}/roles", summary="为用户添加角色", response_model=ResponseModel[List[RoleDetail]])
+@user_router.post(
+    "/{user_id}/roles",
+    summary="为用户添加角色",
+    response_model=ResponseModel[List[RoleDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:role:read"])],
+)
 async def add_role_to_user(user_id: int, role_ids: List[int]):
     """
     为用户添加一个或多个角色。
@@ -177,7 +206,12 @@ async def add_role_to_user(user_id: int, role_ids: List[int]):
 
 
 # 用户修改角色
-@user_router.put("/{user_id}/roles", summary="修改用户角色", response_model=ResponseModel[List[RoleDetail]])
+@user_router.put(
+    "/{user_id}/roles",
+    summary="修改用户角色",
+    response_model=ResponseModel[List[RoleDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:role:read"])],
+)
 async def update_roles_for_user(user_id: int, role_ids: List[int]):
     """
     修改用户的角色（覆盖更新）。
@@ -201,7 +235,12 @@ async def update_roles_for_user(user_id: int, role_ids: List[int]):
 
 
 # 用户删除角色
-@user_router.delete("/{user_id}/roles", summary="删除用户角色", response_model=ResponseModel[List[RoleDetail]])
+@user_router.delete(
+    "/{user_id}/roles",
+    summary="删除用户角色",
+    response_model=ResponseModel[List[RoleDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:role:read"])],
+)
 async def delete_roles_from_user(user_id: int, role_ids: List[int]):
     """
     删除用户的一个或多个角色。
@@ -224,8 +263,12 @@ async def delete_roles_from_user(user_id: int, role_ids: List[int]):
 
 
 # 用户添加权限
-@user_router.post("/{user_id}/permissions", summary="为用户添加权限",
-                  response_model=ResponseModel[List[PermissionDetail]])
+@user_router.post(
+    "/{user_id}/permissions",
+    summary="为用户添加权限",
+    response_model=ResponseModel[List[PermissionDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:permission:read"])],
+)
 async def add_permission_to_user(user_id: int, permission_ids: List[int]):
     """
     为用户添加一个或多个权限。
@@ -248,8 +291,12 @@ async def add_permission_to_user(user_id: int, permission_ids: List[int]):
 
 
 # 用户删除权限
-@user_router.delete("/{user_id}/permissions", summary="删除用户权限",
-                    response_model=ResponseModel[List[PermissionDetail]])
+@user_router.delete(
+    "/{user_id}/permissions",
+    summary="删除用户权限",
+    response_model=ResponseModel[List[PermissionDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:permission:read"])],
+)
 async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
     """
     删除用户的一个或多个权限。
@@ -272,7 +319,12 @@ async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
 
 
 # 用户修改权限
-@user_router.put("/{user_id}/permissions", summary="修改用户权限", response_model=ResponseModel[List[PermissionDetail]])
+@user_router.put(
+    "/{user_id}/permissions",
+    summary="修改用户权限",
+    response_model=ResponseModel[List[PermissionDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update", "system:permission:read"])],
+)
 async def update_permissions_for_user(user_id: int, permission_ids: List[int]):
     """
     修改用户的权限（覆盖更新）。

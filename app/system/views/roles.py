@@ -1,19 +1,25 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListRoleFilterSet
 from app.system.models import Permission, Role
 from app.system.serializers import PermissionDetail, RoleCreate, RoleDetail, RolePatch, RoleUpdate
+from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel
 
 role_router = APIRouter()
 
 
-@role_router.post("", summary="创建角色", response_model=ResponseModel[RoleDetail])
+@role_router.post(
+    "",
+    summary="创建角色",
+    response_model=ResponseModel[RoleDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:role:create"])]
+)
 async def create_role(role: RoleCreate):
     """
     创建一个新的角色。
@@ -24,7 +30,12 @@ async def create_role(role: RoleCreate):
     return ResponseModel(data=response)
 
 
-@role_router.get("", summary="获取角色列表", response_model=ResponseModel[PageModel[RoleDetail]])
+@role_router.get(
+    "",
+    summary="获取角色列表",
+    response_model=ResponseModel[PageModel[RoleDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:role:read"])],
+)
 async def list_roles(role_filter: ListRoleFilterSet = Depends(), pagination: PaginationParams = Depends()):
     """
     获取所有角色的列表。
@@ -39,6 +50,7 @@ async def list_roles(role_filter: ListRoleFilterSet = Depends(), pagination: Pag
     summary="获取角色详细信息",
     response_model=ResponseModel[RoleDetail],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:role:read"])],
 )
 async def get_role(role_id: int):
     """
@@ -54,7 +66,11 @@ async def get_role(role_id: int):
 
 
 @role_router.patch(
-    "/{role_id}", summary="部分更新角色信息", response_model=ResponseModel[RoleDetail], responses={404: {"model": HTTPNotFoundError}}
+    "/{role_id}",
+    summary="部分更新角色信息",
+    response_model=ResponseModel[RoleDetail],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:role:update"])],
 )
 async def patch_role(role_id: int, role: RolePatch):
     """
@@ -73,7 +89,11 @@ async def patch_role(role_id: int, role: RolePatch):
 
 
 @role_router.put(
-    "/{role_id}", summary="更新角色信息", response_model=ResponseModel[RoleDetail], responses={404: {"model": HTTPNotFoundError}}
+    "/{role_id}",
+    summary="更新角色信息",
+    response_model=ResponseModel[RoleDetail],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:role:update"])],
 )
 async def update_role(role_id: int, role: RoleUpdate):
     """
@@ -92,7 +112,11 @@ async def update_role(role_id: int, role: RoleUpdate):
 
 
 @role_router.delete(
-    "/{role_id}", summary="删除角色", response_model=ResponseModel[dict], responses={404: {"model": HTTPNotFoundError}}
+    "/{role_id}",
+    summary="删除角色",
+    response_model=ResponseModel[dict],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:role:delete"])],
 )
 async def delete_role(role_id: int):
     """
@@ -110,6 +134,7 @@ async def delete_role(role_id: int):
     summary="角色的权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:role:read", "system:permission:read"])],
 )
 async def get_role_permissions(role_id: int):
     """
@@ -124,7 +149,12 @@ async def get_role_permissions(role_id: int):
     return ResponseModel(data=permissions_data)
 
 
-@role_router.post("/{role_id}/permissions", summary="为角色添加权限", response_model=ResponseModel[RoleDetail])
+@role_router.post(
+    "/{role_id}/permissions",
+    summary="为角色添加权限",
+    response_model=ResponseModel[RoleDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+)
 async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     """
     为角色添加一个或多个权限。
@@ -146,7 +176,12 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     return ResponseModel(data=response)
 
 
-@role_router.delete("/{role_id}/permissions", summary="删除角色权限", response_model=ResponseModel[RoleDetail])
+@role_router.delete(
+    "/{role_id}/permissions",
+    summary="删除角色权限",
+    response_model=ResponseModel[RoleDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+)
 async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     """
     删除角色的一个或多个权限。
@@ -168,7 +203,12 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     return ResponseModel(data=response)
 
 
-@role_router.put("/{role_id}/permissions", summary="修改角色权限", response_model=ResponseModel[RoleDetail])
+@role_router.put(
+    "/{role_id}/permissions",
+    summary="修改角色权限",
+    response_model=ResponseModel[RoleDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+)
 async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
     """
     修改角色的权限（覆盖更新）。

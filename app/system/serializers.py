@@ -1,15 +1,28 @@
 # Pydantic 模型
-from typing import List
+from typing import List, Optional
 
 from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.system.models import Permission, Role, User
 
+PermissionPydantic = pydantic_model_creator(Permission, name="PermissionPydantic")
+UserPydantic = pydantic_model_creator(User, name="UserPydantic")
+CreatorPydantic = pydantic_model_creator(User, name="CreatorPydantic", include=("id", "username"))
+RolePydantic = pydantic_model_creator(Role, name="RolePydantic")
+
+
 # ===============================================================================================
 # Permission
 # ===============================================================================================
-PermissionDetail = pydantic_model_creator(Permission, name="PermissionDetail")
+
+
+class PermissionDetail(PermissionPydantic):
+    creator: Optional[CreatorPydantic]
+    roles: List[RolePydantic]
+    users: List[UserPydantic]
+
+
 PermissionCreate = pydantic_model_creator(Permission, name="PermissionCreate", include=("name", "description"))
 PermissionUpdate = PermissionCreate
 PermissionPatch = PermissionCreate
