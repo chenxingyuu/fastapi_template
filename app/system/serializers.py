@@ -25,7 +25,7 @@ RolePatch = RoleCreate
 # ===============================================================================================
 # User
 # ===============================================================================================
-UserDetail = pydantic_model_creator(User, name="UserDetail", exclude=("hashed_password",))
+UserDetail = pydantic_model_creator(User, name="UserDetail", exclude=("hashed_password", "creator"))
 
 
 class UserWithRoleDetail(UserDetail):

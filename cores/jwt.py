@@ -1,8 +1,10 @@
 from datetime import timedelta, datetime
 from typing import Optional
 
-from jose import jwt
+from fastapi import HTTPException
+from jose import jwt, JWTError
 from pydantic import BaseModel
+from starlette import status
 
 from cores.config import settings
 
@@ -20,3 +22,15 @@ def create_access_token(
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": int(expire.timestamp())})
     return jwt.encode(to_encode, settings.security.secret_key, algorithm=settings.security.algorithm)
+
+
+def verify_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, settings.security.secret_key, algorithms=[settings.security.algorithm])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
