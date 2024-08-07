@@ -1,5 +1,3 @@
-import secrets
-import string
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,6 +7,7 @@ from app.system.filters import ListUserFilterSet
 from app.system.models import Permission, Role, User
 from app.system.serializers import PermissionDetail, RoleDetail, UserCreate, UserDetail, UserPatch, UserUpdate
 from cores.paginate import PageModel, PaginationParams, paginate
+from cores.pwd import get_password_hash
 from cores.response import ResponseModel
 
 user_router = APIRouter()
@@ -20,19 +19,13 @@ async def validate_user(user_id: int) -> User:
     return user
 
 
-def generate_password(length: int = 12) -> str:
-    alphabet = string.ascii_letters + string.digits + string.punctuation
-    password = "".join(secrets.choice(alphabet) for _ in range(length))
-    return password
-
-
 @user_router.post(path="", summary="创建用户", response_model=ResponseModel[UserDetail])
 async def create_user(user: UserCreate):
     """
     创建一个新的系统用户。
     - **user**: 要创建的用户的详细信息。
     """
-    password = generate_password(12)
+    password = get_password_hash(user.password)
     user_obj = await User.create(**user.dict(exclude_unset=True), hashed_password=password)
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
@@ -40,8 +33,8 @@ async def create_user(user: UserCreate):
 
 @user_router.get("", summary="获取用户列表", response_model=ResponseModel[PageModel[UserDetail]])
 async def list_user(
-    user_filter: ListUserFilterSet = Depends(),
-    pagination: PaginationParams = Depends(),
+        user_filter: ListUserFilterSet = Depends(),
+        pagination: PaginationParams = Depends(),
 ):
     """
     获取系统用户列表，支持多种过滤条件。
@@ -231,7 +224,8 @@ async def delete_roles_from_user(user_id: int, role_ids: List[int]):
 
 
 # 用户添加权限
-@user_router.post("/{user_id}/permissions", summary="为用户添加权限", response_model=ResponseModel[List[PermissionDetail]])
+@user_router.post("/{user_id}/permissions", summary="为用户添加权限",
+                  response_model=ResponseModel[List[PermissionDetail]])
 async def add_permission_to_user(user_id: int, permission_ids: List[int]):
     """
     为用户添加一个或多个权限。
@@ -254,7 +248,8 @@ async def add_permission_to_user(user_id: int, permission_ids: List[int]):
 
 
 # 用户删除权限
-@user_router.delete("/{user_id}/permissions", summary="删除用户权限", response_model=ResponseModel[List[PermissionDetail]])
+@user_router.delete("/{user_id}/permissions", summary="删除用户权限",
+                    response_model=ResponseModel[List[PermissionDetail]])
 async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
     """
     删除用户的一个或多个权限。

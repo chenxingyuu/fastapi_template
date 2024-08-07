@@ -7,7 +7,10 @@ from app.system.urls import router as system_router
 from cores.config import settings
 from cores.model import TORTOISE_ORM
 
-app = FastAPI(title=settings.app.project_name)
+app = FastAPI(
+    title=settings.app.project_name,
+    debug=settings.app.debug,
+)
 
 # 添加 CORS 中间件
 app.add_middleware(
@@ -24,9 +27,9 @@ app.include_router(system_router, prefix=settings.app.api_version)
 register_tortoise(
     app,
     config=TORTOISE_ORM,
-    generate_schemas=True,
+    generate_schemas=False,
     add_exception_handlers=True,
 )
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=settings.app.host, port=settings.app.port)

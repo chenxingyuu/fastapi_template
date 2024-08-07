@@ -2,6 +2,9 @@
 [app]
 project_name = My Custom FastAPI Project
 api_version = /api/v1
+debug = true
+host = ::
+port = 8000
 
 [mysql]
 host = 127.0.0.1
@@ -16,5 +19,7 @@ port = 6379
 password = root
 
 [security]
-secret_key = your-custom-secret-key
-access_token_expire_minutes = 60
+secret_key = 341394e61bfe16704884e9c79ec3a85f309659013a06d6fd1301f283b92738f1
+algorithm = HS256
+token_expire_days = 60
+
