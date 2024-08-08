@@ -1,31 +1,48 @@
 import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListPermissionFilterSet
-from app.system.models import Permission
+from app.system.models import Permission, User
 from app.system.serializers import PermissionCreate, PermissionDetail, PermissionPatch, PermissionUpdate
+from app.system.views.auth import get_current_user, get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel
 
 permission_router = APIRouter()
 
 
-@permission_router.post("", summary="创建权限", response_model=ResponseModel[PermissionDetail])
-async def create_permission(permission: PermissionCreate):
+@permission_router.post(
+    "",
+    summary="创建权限",
+    response_model=ResponseModel[PermissionDetail],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:create"])],
+)
+async def create_permission(
+        permission: PermissionCreate,
+        current_user: User = Depends(get_current_user),
+):
     """
     创建一个新的权限。
     - **permission**: 要创建的权限的详细信息。
     """
-    permission_obj = await Permission.create(**permission.dict())
+    permission_obj = await Permission.create(**permission.dict(), creator_id=current_user.id)
     response = await PermissionDetail.from_tortoise_orm(permission_obj)
     return ResponseModel(data=response)
 
 
-@permission_router.get("", summary="获取权限列表", response_model=ResponseModel[PageModel[PermissionDetail]])
-async def list_permissions(permission_filter: ListPermissionFilterSet = Depends(), pagination: PaginationParams = Depends()):
+@permission_router.get(
+    "",
+    summary="获取权限列表",
+    response_model=ResponseModel[PageModel[PermissionDetail]],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:read"])]
+)
+async def list_permissions(
+        permission_filter: ListPermissionFilterSet = Depends(),
+        pagination: PaginationParams = Depends(),
+):
     """
     获取所有权限的列表，可以按名称和描述进行搜索。
     """
@@ -39,6 +56,7 @@ async def list_permissions(permission_filter: ListPermissionFilterSet = Depends(
     summary="获取权限详细信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:read"])]
 )
 async def get_permission(permission_id: int):
     """
@@ -58,6 +76,7 @@ async def get_permission(permission_id: int):
     summary="更新权限信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:update"])]
 )
 async def update_permission(permission_id: int, permission: PermissionUpdate):
     """
@@ -80,6 +99,7 @@ async def update_permission(permission_id: int, permission: PermissionUpdate):
     summary="部分更新权限信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:update"])]
 )
 async def patch_permission(permission_id: int, permission: PermissionPatch):
     """
@@ -98,7 +118,11 @@ async def patch_permission(permission_id: int, permission: PermissionPatch):
 
 
 @permission_router.delete(
-    "/{permission_id}", summary="删除权限", response_model=ResponseModel[dict], responses={404: {"model": HTTPNotFoundError}}
+    "/{permission_id}",
+    summary="删除权限",
+    response_model=ResponseModel[dict],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:delete"])]
 )
 async def delete_permission(permission_id: int):
     """

@@ -7,6 +7,9 @@ from dataclasses import dataclass
 class AppConfig:
     project_name: str = "My FastAPI Project"
     api_version: str = "/api/v1"
+    debug: bool = False
+    host: str = "127.0.0.1"
+    port: int = 8000
 
 
 @dataclass
@@ -32,7 +35,8 @@ class RedisConfig:
 @dataclass
 class SecurityConfig:
     secret_key: str
-    access_token_expire_minutes: int
+    algorithm: str
+    token_expire_days: int
 
 
 @dataclass
@@ -63,9 +67,13 @@ def read_config() -> Settings:
     config.read(file_path)
 
     app_config = AppConfig(**config["app"])
+    app_config.debug = config.getboolean("app", "debug")
+    app_config.port = config.getint("app", "port")
+
     mysql_config = MySQLConfig(**config["mysql"])
     redis_config = RedisConfig(**config["redis"])
     security_config = SecurityConfig(**config["security"])
+    security_config.token_expire_days = config.getint("security", "token_expire_days")
 
     return Settings(app=app_config, mysql=mysql_config, redis=redis_config, security=security_config)
 
