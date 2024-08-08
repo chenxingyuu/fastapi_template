@@ -108,4 +108,4 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username, "scopes": filter_scopes(permissions)}
     )
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, token_type="Bearer")

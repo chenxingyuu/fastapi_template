@@ -18,6 +18,7 @@ from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel
 
 role_router = APIRouter()
+role_permission_router = APIRouter()
 
 
 @role_router.post(
@@ -162,7 +163,7 @@ async def delete_role(role_id: int):
     return ResponseModel(data={"deleted": deleted_count})
 
 
-@role_router.get(
+@role_permission_router.get(
     "/{role_id}/permissions",
     summary="角色的权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
@@ -193,7 +194,7 @@ async def get_role_permissions(role_id: int):
     return ResponseModel(data=permissions_data)
 
 
-@role_router.post(
+@role_permission_router.post(
     "/{role_id}/permissions",
     summary="为角色添加权限",
     response_model=ResponseModel[RoleDetail],
@@ -234,7 +235,7 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     return ResponseModel(data=response)
 
 
-@role_router.delete(
+@role_permission_router.delete(
     "/{role_id}/permissions",
     summary="删除角色权限",
     response_model=ResponseModel[RoleDetail],
@@ -275,7 +276,7 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     return ResponseModel(data=response)
 
 
-@role_router.put(
+@role_permission_router.put(
     "/{role_id}/permissions",
     summary="修改角色权限",
     response_model=ResponseModel[RoleDetail],

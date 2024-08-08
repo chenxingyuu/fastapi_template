@@ -9,7 +9,11 @@ from app.system.models import Permission, Role, User
 PermissionPydantic = pydantic_model_creator(
     Permission, name="PermissionPydantic"
 )
-UserPydantic = pydantic_model_creator(User, name="UserPydantic")
+UserPydantic = pydantic_model_creator(
+    User,
+    name="UserPydantic",
+    include=("id", "username", "is_active", "is_superuser"),
+)
 CreatorPydantic = pydantic_model_creator(
     User, name="CreatorPydantic", include=("id", "username")
 )
@@ -21,7 +25,15 @@ RolePydantic = pydantic_model_creator(Role, name="RolePydantic")
 PermissionDetail = pydantic_model_creator(
     Permission,
     name="PermissionDetail",
-    exclude=("creator", "roles", "users"),
+    include=(
+        "id",
+        "name",
+        "description",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "creator_id",
+    ),
 )
 PermissionCreate = pydantic_model_creator(
     Permission, name="PermissionCreate", include=("name", "description")
@@ -32,7 +44,19 @@ PermissionPatch = PermissionCreate
 # ===============================================================================================
 # Role
 # ===============================================================================================
-RoleDetail = pydantic_model_creator(Role, name="RoleDetail")
+RoleDetail = pydantic_model_creator(
+    Role,
+    name="RoleDetail",
+    include=(
+        "id",
+        "name",
+        "description",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "creator_id",
+    ),
+)
 RoleCreate = pydantic_model_creator(
     Role, name="RoleCreate", include=("name", "description")
 )
@@ -43,8 +67,23 @@ RolePatch = RoleCreate
 # User
 # ===============================================================================================
 UserDetail = pydantic_model_creator(
-    User, name="UserDetail", exclude=("hashed_password", "creator")
+    User,
+    name="UserDetail",
+    include=(
+        "id",
+        "username",
+        "is_active",
+        "is_superuser",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "creator_id",
+    ),
 )
+
+
+# class UserDetail(UserPydantic):
+#     pass
 
 
 class UserWithRoleDetail(UserDetail):

@@ -19,6 +19,9 @@ from cores.pwd import get_password_hash
 from cores.response import ResponseModel
 
 user_router = APIRouter()
+user_me_router = APIRouter()
+user_role_route = APIRouter()
+user_permission_route = APIRouter()
 
 
 async def validate_user(user_id: int) -> User:
@@ -72,6 +75,114 @@ async def list_user(
     query = user_filter.apply_filters()
     page_data = await paginate(query, pagination, UserDetail)
     return ResponseModel(data=page_data)
+
+
+@user_me_router.get(
+    "/me",
+    summary="获取我的详细信息",
+    response_model=ResponseModel[UserDetail],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:user:me:read"],
+        )
+    ],
+)
+async def get_user_me(current_user: User = Depends(get_current_active_user)):
+    user_data = UserDetail.from_orm(current_user)
+    return ResponseModel(data=user_data)
+
+
+@user_me_router.put(
+    "/me",
+    summary="更新我的详细信息",
+    response_model=ResponseModel[UserDetail],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:user:me:update"],
+        )
+    ],
+)
+async def update_user_me(
+    user: UserUpdate, current_user: User = Depends(get_current_active_user)
+):
+    updated_count = (
+        await User.get_queryset()
+        .filter(id=current_user.id)
+        .update(**user.dict(exclude_unset=True))
+    )
+    if not updated_count:
+        raise HTTPException(
+            status_code=404, detail=f"User {current_user.id} not found"
+        )
+    user_obj = await User.get_queryset().get(id=current_user.id)
+    user_data = await UserDetail.from_tortoise_orm(user_obj)
+    return ResponseModel(data=user_data)
+
+
+@user_me_router.delete(
+    "/me",
+    summary="删除自己的账号",
+    response_model=ResponseModel[dict],
+    responses={404: {"model": HTTPNotFoundError}},
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:user:me:delete"])
+    ],
+)
+async def delete_user_me(
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    删除指定 ID 的用户。
+    - **user_id**: 要删除的用户的唯一标识符。
+    """
+    deleted_count = (
+        await User.get_queryset().filter(id=current_user.id).delete()
+    )
+    if not deleted_count:
+        raise HTTPException(
+            status_code=404, detail=f"User {current_user.id} not found"
+        )
+    return ResponseModel(data={"deleted": deleted_count})
+
+
+@user_me_router.get(
+    "/me/roles",
+    summary="获取我的角色",
+    response_model=ResponseModel[List[RoleDetail]],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:user:me:read", "system:role:me:read"],
+        )
+    ],
+)
+async def get_user_me_roles(
+    current_user: User = Depends(get_current_active_user),
+):
+    roles_data = await RoleDetail.from_queryset(current_user.roles.all())
+    return ResponseModel(data=roles_data)
+
+
+@user_me_router.get(
+    "/me/permissions",
+    summary="获取我的权限",
+    response_model=ResponseModel[List[PermissionDetail]],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:user:me:read", "system:permission:me:read"],
+        )
+    ],
+)
+async def get_user_me_permissions(
+    current_user: User = Depends(get_current_active_user),
+):
+    roles_data = await PermissionDetail.from_queryset(
+        current_user.permissions.all()
+    )
+    return ResponseModel(data=roles_data)
 
 
 @user_router.get(
@@ -178,10 +289,10 @@ async def delete_user(user_id: int):
 
 
 # 获取用户的角色列表
-@user_router.get(
+@user_role_route.get(
     "/{user_id}/roles",
     summary="获取用户角色列表",
-    response_model=ResponseModel[List],
+    response_model=ResponseModel[List[RoleDetail]],
     responses={404: {"model": HTTPNotFoundError}},
     dependencies=[
         Security(
@@ -209,7 +320,7 @@ async def get_user_roles(user_id: int):
 
 
 # 获取用户的权限列表
-@user_router.get(
+@user_permission_route.get(
     "/{user_id}/permissions",
     summary="获取用户权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
@@ -235,7 +346,7 @@ async def get_user_permissions(user_id: int):
 
 
 # 用户添加角色
-@user_router.post(
+@user_role_route.post(
     "/{user_id}/roles",
     summary="为用户添加角色",
     response_model=ResponseModel[List[RoleDetail]],
@@ -271,7 +382,7 @@ async def add_role_to_user(user_id: int, role_ids: List[int]):
 
 
 # 用户修改角色
-@user_router.put(
+@user_role_route.put(
     "/{user_id}/roles",
     summary="修改用户角色",
     response_model=ResponseModel[List[RoleDetail]],
@@ -308,7 +419,7 @@ async def update_roles_for_user(user_id: int, role_ids: List[int]):
 
 
 # 用户删除角色
-@user_router.delete(
+@user_role_route.delete(
     "/{user_id}/roles",
     summary="删除用户角色",
     response_model=ResponseModel[List[RoleDetail]],
@@ -344,7 +455,7 @@ async def delete_roles_from_user(user_id: int, role_ids: List[int]):
 
 
 # 用户添加权限
-@user_router.post(
+@user_permission_route.post(
     "/{user_id}/permissions",
     summary="为用户添加权限",
     response_model=ResponseModel[List[PermissionDetail]],
@@ -386,7 +497,7 @@ async def add_permission_to_user(user_id: int, permission_ids: List[int]):
 
 
 # 用户删除权限
-@user_router.delete(
+@user_permission_route.delete(
     "/{user_id}/permissions",
     summary="删除用户权限",
     response_model=ResponseModel[List[PermissionDetail]],
@@ -428,7 +539,7 @@ async def delete_permission_from_user(user_id: int, permission_ids: List[int]):
 
 
 # 用户修改权限
-@user_router.put(
+@user_permission_route.put(
     "/{user_id}/permissions",
     summary="修改用户权限",
     response_model=ResponseModel[List[PermissionDetail]],

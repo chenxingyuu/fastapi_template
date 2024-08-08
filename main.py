@@ -1,4 +1,5 @@
 import contextlib
+import logging
 from typing import AsyncIterator
 
 import uvicorn
@@ -10,6 +11,8 @@ from tortoise.contrib.fastapi import register_tortoise
 from cores.config import settings
 from cores.model import TORTOISE_ORM
 from cores.scope import init_scopes
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 @contextlib.asynccontextmanager
