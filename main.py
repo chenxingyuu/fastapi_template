@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # 包含路由
     from app.system.urls import router as system_router
+
     app.include_router(system_router, prefix=settings.app.api_version)
     yield
     # 应用关闭时的清理
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title=settings.app.project_name,
     debug=settings.app.debug,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # 添加 CORS 中间件

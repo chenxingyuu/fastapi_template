@@ -27,7 +27,10 @@ def filter_scopes(scope_list: list[str]) -> list[str]:
 
     for scope in sorted_scopes:
         # 检查当前权限是否被其他权限覆盖
-        if not any(scope.startswith(covered_scope + ":") for covered_scope in covered_scopes):
+        if not any(
+            scope.startswith(covered_scope + ":")
+            for covered_scope in covered_scopes
+        ):
             result.append(scope)
             covered_scopes.add(scope)
 

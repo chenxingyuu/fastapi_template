@@ -6,7 +6,13 @@ from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListRoleFilterSet
 from app.system.models import Permission, Role
-from app.system.serializers import PermissionDetail, RoleCreate, RoleDetail, RolePatch, RoleUpdate
+from app.system.serializers import (
+    PermissionDetail,
+    RoleCreate,
+    RoleDetail,
+    RolePatch,
+    RoleUpdate,
+)
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel
@@ -18,7 +24,9 @@ role_router = APIRouter()
     "",
     summary="创建角色",
     response_model=ResponseModel[RoleDetail],
-    dependencies=[Security(get_current_active_user, scopes=["system:role:create"])]
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:create"])
+    ],
 )
 async def create_role(role: RoleCreate):
     """
@@ -34,9 +42,14 @@ async def create_role(role: RoleCreate):
     "",
     summary="获取角色列表",
     response_model=ResponseModel[PageModel[RoleDetail]],
-    dependencies=[Security(get_current_active_user, scopes=["system:role:read"])],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:read"])
+    ],
 )
-async def list_roles(role_filter: ListRoleFilterSet = Depends(), pagination: PaginationParams = Depends()):
+async def list_roles(
+    role_filter: ListRoleFilterSet = Depends(),
+    pagination: PaginationParams = Depends(),
+):
     """
     获取所有角色的列表。
     """
@@ -50,7 +63,9 @@ async def list_roles(role_filter: ListRoleFilterSet = Depends(), pagination: Pag
     summary="获取角色详细信息",
     response_model=ResponseModel[RoleDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[Security(get_current_active_user, scopes=["system:role:read"])],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:read"])
+    ],
 )
 async def get_role(role_id: int):
     """
@@ -62,7 +77,9 @@ async def get_role(role_id: int):
         response = await RoleDetail.from_queryset_single(role_queryset)
         return ResponseModel(data=response)
     except DoesNotExist:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
 
 @role_router.patch(
@@ -70,7 +87,9 @@ async def get_role(role_id: int):
     summary="部分更新角色信息",
     response_model=ResponseModel[RoleDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[Security(get_current_active_user, scopes=["system:role:update"])],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:update"])
+    ],
 )
 async def patch_role(role_id: int, role: RolePatch):
     """
@@ -80,9 +99,13 @@ async def patch_role(role_id: int, role: RolePatch):
     """
     role_obj = await Role.get_queryset().get_or_none(id=role_id)
     if not role_obj:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
-    await Role.get_queryset().filter(id=role_id).update(**role.dict(exclude_unset=True))
+    await Role.get_queryset().filter(id=role_id).update(
+        **role.dict(exclude_unset=True)
+    )
     updated_role = await Role.get_queryset().get(id=role_id)
     response = await RoleDetail.from_queryset_single(updated_role)
     return ResponseModel(data=response)
@@ -93,7 +116,9 @@ async def patch_role(role_id: int, role: RolePatch):
     summary="更新角色信息",
     response_model=ResponseModel[RoleDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[Security(get_current_active_user, scopes=["system:role:update"])],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:update"])
+    ],
 )
 async def update_role(role_id: int, role: RoleUpdate):
     """
@@ -103,9 +128,13 @@ async def update_role(role_id: int, role: RoleUpdate):
     """
     role_obj = await Role.get_queryset().get_or_none(id=role_id)
     if not role_obj:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
-    await Role.get_queryset().filter(id=role_id).update(**role.dict(exclude_unset=True))
+    await Role.get_queryset().filter(id=role_id).update(
+        **role.dict(exclude_unset=True)
+    )
     updated_role = await Role.get_queryset().get(id=role_id)
     response = await RoleDetail.from_queryset_single(updated_role)
     return ResponseModel(data=response)
@@ -116,7 +145,9 @@ async def update_role(role_id: int, role: RoleUpdate):
     summary="删除角色",
     response_model=ResponseModel[dict],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[Security(get_current_active_user, scopes=["system:role:delete"])],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:delete"])
+    ],
 )
 async def delete_role(role_id: int):
     """
@@ -125,7 +156,9 @@ async def delete_role(role_id: int):
     """
     deleted_count = await Role.get_queryset().filter(id=role_id).delete()
     if not deleted_count:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
     return ResponseModel(data={"deleted": deleted_count})
 
 
@@ -134,18 +167,29 @@ async def delete_role(role_id: int):
     summary="角色的权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[Security(get_current_active_user, scopes=["system:role:read", "system:permission:read"])],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:role:read", "system:permission:read"],
+        )
+    ],
 )
 async def get_role_permissions(role_id: int):
     """
     根据角色 ID 获取单个角色的权限列表。
     - **role_id**: 角色的唯一标识符。
     """
-    role = await Role.get_queryset().prefetch_related("permissions").get_or_none(id=role_id)
+    role = (
+        await Role.get_queryset()
+        .prefetch_related("permissions")
+        .get_or_none(id=role_id)
+    )
     if not role:
         return ResponseModel(code=404, msg=f"Role {role} not found")
 
-    permissions_data = await PermissionDetail.from_queryset(role.permissions.all())
+    permissions_data = await PermissionDetail.from_queryset(
+        role.permissions.all()
+    )
     return ResponseModel(data=permissions_data)
 
 
@@ -153,7 +197,12 @@ async def get_role_permissions(role_id: int):
     "/{role_id}/permissions",
     summary="为角色添加权限",
     response_model=ResponseModel[RoleDetail],
-    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:role:update", "system:permission:read"],
+        )
+    ],
 )
 async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     """
@@ -163,12 +212,21 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
-    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
+    permissions = (
+        await Permission.get_queryset().filter(id__in=permission_ids).all()
+    )
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
-        raise HTTPException(status_code=404, detail=f"Permissions with IDs {missing_ids} not found")
+        missing_ids = set(permission_ids) - {
+            permission.id for permission in permissions
+        }
+        raise HTTPException(
+            status_code=404,
+            detail=f"Permissions with IDs {missing_ids} not found",
+        )
 
     await role.permissions.add(*permissions)
     updated_role = Role.get_queryset().get(id=role_id)
@@ -180,7 +238,12 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     "/{role_id}/permissions",
     summary="删除角色权限",
     response_model=ResponseModel[RoleDetail],
-    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:role:update", "system:permission:read"],
+        )
+    ],
 )
 async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     """
@@ -190,12 +253,21 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
-    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
+    permissions = (
+        await Permission.get_queryset().filter(id__in=permission_ids).all()
+    )
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
-        raise HTTPException(status_code=404, detail=f"Permissions with IDs {missing_ids} not found")
+        missing_ids = set(permission_ids) - {
+            permission.id for permission in permissions
+        }
+        raise HTTPException(
+            status_code=404,
+            detail=f"Permissions with IDs {missing_ids} not found",
+        )
 
     await role.permissions.remove(*permissions)
     updated_role = await Role.get_queryset().get(id=role_id)
@@ -207,7 +279,12 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     "/{role_id}/permissions",
     summary="修改角色权限",
     response_model=ResponseModel[RoleDetail],
-    dependencies=[Security(get_current_active_user, scopes=["system:role:update", "system:permission:read"])],
+    dependencies=[
+        Security(
+            get_current_active_user,
+            scopes=["system:role:update", "system:permission:read"],
+        )
+    ],
 )
 async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
     """
@@ -217,12 +294,21 @@ async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Role {role_id} not found"
+        )
 
-    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
+    permissions = (
+        await Permission.get_queryset().filter(id__in=permission_ids).all()
+    )
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
-        raise HTTPException(status_code=404, detail=f"Permissions with IDs {missing_ids} not found")
+        missing_ids = set(permission_ids) - {
+            permission.id for permission in permissions
+        }
+        raise HTTPException(
+            status_code=404,
+            detail=f"Permissions with IDs {missing_ids} not found",
+        )
 
     await role.permissions.clear()
     await role.permissions.add(*permissions)

@@ -37,15 +37,37 @@ class PaginationParams:
             self.sort_order = [OrderType.DESC]
 
         if len(self.sort_order) < len(self.sort_by):
-            self.sort_order = [*self.sort_order, *self.sort_order[-1:] * (len(self.sort_by) - len(self.sort_order))]
+            self.sort_order = [
+                *self.sort_order,
+                *self.sort_order[-1:]
+                * (len(self.sort_by) - len(self.sort_order)),
+            ]
 
-        queryset = queryset.order_by(*[f"{order.desc}{field}" for field, order in zip(self.sort_by, self.sort_order)])
+        queryset = queryset.order_by(
+            *[
+                f"{order.desc}{field}"
+                for field, order in zip(self.sort_by, self.sort_order)
+            ]
+        )
 
         return queryset
 
 
-async def paginate(queryset: QuerySet[T], pagination: PaginationParams, schema: Type[PydanticModel]) -> PageModel[T]:
+async def paginate(
+    queryset: QuerySet[T],
+    pagination: PaginationParams,
+    schema: Type[PydanticModel],
+) -> PageModel[T]:
     total = await queryset.count()
-    queryset = pagination.apply_sorting(queryset).offset((pagination.page - 1) * pagination.limit).limit(pagination.limit)
+    queryset = (
+        pagination.apply_sorting(queryset)
+        .offset((pagination.page - 1) * pagination.limit)
+        .limit(pagination.limit)
+    )
     items = await schema.from_queryset(queryset)
-    return PageModel(list=items, total=total, page=pagination.page, limit=pagination.limit)
+    return PageModel(
+        list=items,
+        total=total,
+        page=pagination.page,
+        limit=pagination.limit,
+    )
