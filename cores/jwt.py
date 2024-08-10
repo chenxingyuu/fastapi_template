@@ -12,6 +12,7 @@ from cores.config import settings
 class Token(BaseModel):
     access_token: str
     token_type: str
+    scopes: list[str]
 
 
 def create_access_token(

@@ -11,11 +11,13 @@ from pydantic import BaseModel, ValidationError
 from starlette import status
 
 from app.system.models import Permission, User
+from app.system.serializers import UserDetail
 from cores.jwt import Token, create_access_token, verify_token
 from cores.pwd import verify_password
+from cores.response import ResponseModel
 from cores.scope import filter_scopes, scopes
 
-auth_router = APIRouter(dependency_overrides_provider=None)
+auth_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/token", scopes=scopes
@@ -81,13 +83,13 @@ async def get_current_user(
 
 async def get_current_active_user(
     current_user: User = Security(get_current_user),
-) -> User:
+) -> UserDetail:
     if current_user.is_active:
         return current_user
     raise HTTPException(status_code=400, detail="Inactive user")
 
 
-@auth_router.post("/token", response_model=Token)
+@auth_router.post("/token", response_model=ResponseModel[Token])
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
@@ -104,8 +106,15 @@ async def login_for_access_token(
         .all()
         .values_list("name", flat=True)
     )
+    filter_permissions = filter_scopes(permissions)
 
     access_token = create_access_token(
-        data={"sub": user.username, "scopes": filter_scopes(permissions)}
+        data={"sub": user.username, "scopes": filter_permissions}
     )
-    return Token(access_token=access_token, token_type="Bearer")
+    return ResponseModel(
+        data=Token(
+            access_token=access_token,
+            token_type="Bearer",
+            scopes=filter_permissions,
+        )
+    )
