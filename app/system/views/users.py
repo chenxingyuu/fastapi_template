@@ -179,10 +179,10 @@ async def get_user_me_roles(
 async def get_user_me_permissions(
     current_user: User = Depends(get_current_active_user),
 ):
-    roles_data = await PermissionDetail.from_queryset(
+    permissions_data = await PermissionDetail.from_queryset(
         current_user.permissions.all()
     )
-    return ResponseModel(data=roles_data)
+    return ResponseModel(data=permissions_data)
 
 
 @user_router.get(

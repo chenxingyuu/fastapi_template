@@ -69,7 +69,7 @@ async def get_current_user(
 
     for scope in security_scopes.scopes:
         for user_scope in token_data.scopes:
-            if scope.startswith(user_scope):
+            if scope == user_scope or scope.startswith(f"{user_scope}:"):
                 break
         else:
             raise HTTPException(
