@@ -1,5 +1,5 @@
 # 使用官方的 Python 基础镜像
-FROM python:3.8-slim
+FROM python:3.10.14-slim
 LABEL authors="chenxingyu"
 
 # 安装 tzdata 包以设置时区

@@ -2,7 +2,7 @@ version: "3"
 
 services:
   app:
-    build: .
+    image: fastapi-demo
     volumes:
       - ./config.ini:/app/config.ini
     container_name: fastapi-demo
