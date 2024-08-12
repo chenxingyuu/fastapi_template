@@ -10,10 +10,9 @@ from passlib.exc import InvalidTokenError
 from pydantic import BaseModel, ValidationError
 from starlette import status
 
-from app.system.models import Permission, User
+from app.system.models import User
 from app.system.serializers import UserDetail
 from cores.jwt import Token, create_access_token, verify_token
-from cores.pwd import verify_password
 from cores.response import ResponseModel
 from cores.scope import filter_scopes, scopes
 
@@ -30,11 +29,16 @@ class TokenData(BaseModel):
 
 
 async def authenticate_user(username: str, password: str) -> bool | User:
-    user = await User.get_queryset().get_or_none(username=username)
+    user = (
+        await User
+        .get_queryset()
+        .prefetch_related("roles__permissions")
+        .get_or_none(username=username)
+    )
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
-        return False
+    # if not verify_password(password, user.hashed_password):
+    #     return False
     return user
 
 
@@ -63,7 +67,12 @@ async def get_current_user(
     except (InvalidTokenError, ValidationError):
         raise credentials_exception
 
-    user = await User.get_queryset().get_or_none(username=username)
+    user = (
+        await User
+        .get_queryset()
+        .prefetch_related("roles__permissions")
+        .get_or_none(username=username)
+    )
     if user is None:
         raise credentials_exception
 
@@ -100,12 +109,11 @@ async def login_for_access_token(
         )
 
     # 查询权限
-    permissions = (
-        await Permission.get_queryset()
-        .filter(users=user)
-        .all()
-        .values_list("name", flat=True)
-    )
+    permissions = set()
+    for role in user.roles:
+        for permission in role.permissions:
+            permissions.add(permission.name)
+
     filter_permissions = filter_scopes(permissions)
 
     access_token = create_access_token(

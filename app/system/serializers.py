@@ -1,5 +1,4 @@
 # Pydantic 模型
-from typing import List
 
 from tortoise.contrib.pydantic import pydantic_model_creator
 
@@ -80,19 +79,6 @@ UserDetail = pydantic_model_creator(
     ),
 )
 
-
-# class UserDetail(UserPydantic):
-#     pass
-
-
-class UserWithRoleDetail(UserDetail):
-    roles: List[RoleDetail]
-
-
-class UserWithPermissionDetail(UserDetail):
-    permissions: List[PermissionDetail]
-
-
 UserCreate = pydantic_model_creator(
     User, name="UserCreate", include=("username",)
 )
@@ -105,5 +91,5 @@ UserUpdate = pydantic_model_creator(
 UserPatch = pydantic_model_creator(
     User,
     name="UserPatch",
-    exclude=("id", "created_at", "updated_at", "deleted_at"),
+    include=("username", "is_active"),
 )

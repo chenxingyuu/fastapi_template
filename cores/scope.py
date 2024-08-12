@@ -1,3 +1,5 @@
+from typing import Union
+
 from app.system.models import Permission
 
 scopes = {}
@@ -12,7 +14,7 @@ async def init_scopes():
     }
 
 
-def filter_scopes(scope_list: list[str]) -> list[str]:
+def filter_scopes(scope_list: Union[list[str], set[str]]) -> list[str]:
     """
     过滤范围
     >>> filter_scopes(["a:b:c", "a:b:d", "a:b", "d", "e:f"])

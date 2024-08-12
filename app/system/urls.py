@@ -5,12 +5,10 @@ from fastapi import APIRouter
 from app.system.views.auth import auth_router
 from app.system.views.permissions import permission_router
 from app.system.views.roles import role_permission_router, role_router
-from app.system.views.users import (
-    user_me_router,
-    user_permission_route,
-    user_role_route,
-    user_router,
-)
+from app.system.views.users import user_router
+from app.system.views.users_me import user_me_router
+from app.system.views.users_permissions import user_permission_route
+from app.system.views.users_roles import user_role_route
 
 router = APIRouter()
 router.include_router(auth_router, prefix="/auth", tags=["authentication"])
