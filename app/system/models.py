@@ -11,11 +11,6 @@ class User(Model):
     roles = fields.ManyToManyField(
         "models.Role", related_name="users", through="system_user_roles"
     )
-    permissions = fields.ManyToManyField(
-        "models.Permission",
-        related_name="users",
-        through="sys_user_permissions",
-    )
 
     class Meta:
         table = "system_users"
