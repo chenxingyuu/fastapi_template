@@ -45,9 +45,10 @@ async def create_user(user: UserCreate):
     创建一个新的系统用户。
     - **user**: 要创建的用户的详细信息。
     """
-    password = get_password_hash(user.password)
+    password = f"{user.username}@123456"
+    hashed_password = get_password_hash(password)
     user_obj = await User.create(
-        **user.dict(exclude_unset=True), hashed_password=password
+        **user.dict(exclude_unset=True), hashed_password=hashed_password
     )
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
@@ -223,16 +224,13 @@ async def update_user(user_id: int, user: UserUpdate):
     - **user_id**: 要更新的用户的唯一标识符。
     - **user**: 更新后的用户详细信息。
     """
-    updated_count = (
-        await User.get_queryset()
-        .filter(id=user_id)
-        .update(**user.dict(exclude_unset=True))
-    )
-    if not updated_count:
+    user_obj = await User.get_queryset().get(id=user_id)
+    if not user_obj:
         raise HTTPException(
             status_code=404, detail=f"User {user_id} not found"
         )
-    user_obj = await User.get_queryset().get(id=user_id)
+    await User.get_queryset().filter(id=user_id).update(**user.dict(exclude_unset=True))
+
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
 

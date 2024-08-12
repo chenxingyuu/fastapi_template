@@ -60,6 +60,25 @@ async def list_roles(
 
 
 @role_router.get(
+    "/all",
+    summary="获取所有角色列表",
+    response_model=ResponseModel[List[RoleDetail]],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:role:read"])
+    ],
+)
+async def list_roles(
+    role_filter: ListRoleFilterSet = Depends(),
+):
+    """
+    获取所有角色的列表。
+    """
+    query = role_filter.apply_filters()
+    role_data = await RoleDetail.from_queryset(query)
+    return ResponseModel(data=role_data)
+
+
+@role_router.get(
     "/{role_id}",
     summary="获取角色详细信息",
     response_model=ResponseModel[RoleDetail],
@@ -107,7 +126,7 @@ async def patch_role(role_id: int, role: RolePatch):
     await Role.get_queryset().filter(id=role_id).update(
         **role.dict(exclude_unset=True)
     )
-    updated_role = await Role.get_queryset().get(id=role_id)
+    updated_role = Role.get_queryset().get(id=role_id)
     response = await RoleDetail.from_queryset_single(updated_role)
     return ResponseModel(data=response)
 
@@ -136,7 +155,7 @@ async def update_role(role_id: int, role: RoleUpdate):
     await Role.get_queryset().filter(id=role_id).update(
         **role.dict(exclude_unset=True)
     )
-    updated_role = await Role.get_queryset().get(id=role_id)
+    updated_role = Role.get_queryset().get(id=role_id)
     response = await RoleDetail.from_queryset_single(updated_role)
     return ResponseModel(data=response)
 
@@ -313,6 +332,6 @@ async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
 
     await role.permissions.clear()
     await role.permissions.add(*permissions)
-    updated_role = await Role.get_queryset().get(id=role_id)
+    updated_role = Role.get_queryset().get(id=role_id)
     response = await RoleDetail.from_queryset_single(updated_role)
     return ResponseModel(data=response)

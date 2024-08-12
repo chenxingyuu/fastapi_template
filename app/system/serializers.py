@@ -1,7 +1,6 @@
 # Pydantic 模型
 from typing import List
 
-from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.system.models import Permission, Role, User
@@ -94,17 +93,14 @@ class UserWithPermissionDetail(UserDetail):
     permissions: List[PermissionDetail]
 
 
-class UserPassword(User):
-    password = fields.CharField(max_length=255)
-
-
 UserCreate = pydantic_model_creator(
-    UserPassword, name="UserCreate", include=("username", "password")
+    User, name="UserCreate", include=("username",)
 )
+
 UserUpdate = pydantic_model_creator(
     User,
     name="UserUpdate",
-    exclude=("id", "created_at", "updated_at", "deleted_at"),
+    include=("username", "is_active"),
 )
 UserPatch = pydantic_model_creator(
     User,

@@ -1,4 +1,5 @@
 import datetime
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
@@ -60,6 +61,25 @@ async def list_permissions(
     query = permission_filter.apply_filters()
     page_data = await paginate(query, pagination, PermissionDetail)
     return ResponseModel(data=page_data)
+
+
+@permission_router.get(
+    "/all",
+    summary="获取所有权限列表",
+    response_model=ResponseModel[List[PermissionDetail]],
+    dependencies=[
+        Security(get_current_active_user, scopes=["system:permission:read"])
+    ],
+)
+async def all_permissions(
+    permission_filter: ListPermissionFilterSet = Depends(),
+):
+    """
+    获取所有权限的列表，可以按名称和描述进行搜索。
+    """
+    query = permission_filter.apply_filters()
+    permissions = await PermissionDetail.from_queryset(query)
+    return ResponseModel(data=permissions)
 
 
 @permission_router.get(
