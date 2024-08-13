@@ -17,9 +17,7 @@ class Token(BaseModel):
 
 def create_access_token(
     data: dict,
-    expires_delta: Optional[timedelta] = timedelta(
-        days=settings.security.token_expire_days
-    ),
+    expires_delta: Optional[timedelta] = timedelta(days=settings.security.token_expire_days),
 ):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta

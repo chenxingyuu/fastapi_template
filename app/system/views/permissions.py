@@ -24,9 +24,7 @@ permission_router = APIRouter()
     "",
     summary="创建权限",
     response_model=ResponseModel[PermissionDetail],
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:create"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:create"])],
 )
 async def create_permission(
     permission: PermissionCreate,
@@ -36,9 +34,7 @@ async def create_permission(
     创建一个新的权限。
     - **permission**: 要创建的权限的详细信息。
     """
-    permission_obj = await Permission.create(
-        **permission.dict(), creator_id=current_user.id
-    )
+    permission_obj = await Permission.create(**permission.dict(), creator_id=current_user.id)
     response = await PermissionDetail.from_tortoise_orm(permission_obj)
     return ResponseModel(data=response)
 
@@ -47,9 +43,7 @@ async def create_permission(
     "",
     summary="获取权限列表",
     response_model=ResponseModel[PageModel[PermissionDetail]],
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:read"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:read"])],
 )
 async def list_permissions(
     permission_filter: ListPermissionFilterSet = Depends(),
@@ -67,9 +61,7 @@ async def list_permissions(
     "/all",
     summary="获取所有权限列表",
     response_model=ResponseModel[List[PermissionDetail]],
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:read"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:read"])],
 )
 async def all_permissions(
     permission_filter: ListPermissionFilterSet = Depends(),
@@ -87,9 +79,7 @@ async def all_permissions(
     summary="获取权限详细信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:read"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:read"])],
 )
 async def get_permission(permission_id: int):
     """
@@ -101,9 +91,7 @@ async def get_permission(permission_id: int):
         response = await PermissionDetail.from_queryset_single(permission)
         return ResponseModel(data=response)
     except DoesNotExist:
-        raise HTTPException(
-            status_code=404, detail=f"Permission {permission_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Permission {permission_id} not found")
 
 
 @permission_router.put(
@@ -111,9 +99,7 @@ async def get_permission(permission_id: int):
     summary="更新权限信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:update"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:update"])],
 )
 async def update_permission(permission_id: int, permission: PermissionUpdate):
     """
@@ -121,13 +107,9 @@ async def update_permission(permission_id: int, permission: PermissionUpdate):
     - **permission_id**: 要更新的权限的唯一标识符。
     - **permission**: 更新后的权限详细信息。
     """
-    permission_obj = await Permission.get_queryset().get_or_none(
-        id=permission_id
-    )
+    permission_obj = await Permission.get_queryset().get_or_none(id=permission_id)
     if not permission_obj:
-        raise HTTPException(
-            status_code=404, detail=f"Permission {permission_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Permission {permission_id} not found")
 
     await Permission.get_queryset().filter(id=permission_id).update(
         **permission.dict(exclude_unset=True)
@@ -142,9 +124,7 @@ async def update_permission(permission_id: int, permission: PermissionUpdate):
     summary="部分更新权限信息",
     response_model=ResponseModel[PermissionDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:update"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:update"])],
 )
 async def patch_permission(permission_id: int, permission: PermissionPatch):
     """
@@ -152,13 +132,9 @@ async def patch_permission(permission_id: int, permission: PermissionPatch):
     - **permission_id**: 要更新的权限的唯一标识符。
     - **permission**: 更新后的权限详细信息（仅更新提供的字段）。
     """
-    permission_obj = await Permission.get_queryset().get_or_none(
-        id=permission_id
-    )
+    permission_obj = await Permission.get_queryset().get_or_none(id=permission_id)
     if not permission_obj:
-        raise HTTPException(
-            status_code=404, detail=f"Permission {permission_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Permission {permission_id} not found")
 
     await Permission.get_queryset().filter(id=permission_id).update(
         **permission.dict(exclude_unset=True)
@@ -173,9 +149,7 @@ async def patch_permission(permission_id: int, permission: PermissionPatch):
     summary="删除权限",
     response_model=ResponseModel[dict],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:permission:delete"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:permission:delete"])],
 )
 async def delete_permission(permission_id: int):
     """
@@ -188,6 +162,4 @@ async def delete_permission(permission_id: int):
         await permission.save()
         return ResponseModel(data={"deleted": 1})
     except DoesNotExist:
-        raise HTTPException(
-            status_code=404, detail=f"Permission {permission_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Permission {permission_id} not found")

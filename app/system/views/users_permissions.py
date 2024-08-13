@@ -28,12 +28,7 @@ async def get_user_permissions(user_id: int):
     - **user_id**: 用户的唯一标识符。
     """
     # 查询用户并预加载关联的角色
-    user = (
-        await User
-        .get_queryset()
-        .prefetch_related("roles__permissions")
-        .get_or_none(id=user_id)
-    )
+    user = await User.get_queryset().prefetch_related("roles__permissions").get_or_none(id=user_id)
     if not user:
         return ResponseModel(data=[])
 
@@ -43,8 +38,6 @@ async def get_user_permissions(user_id: int):
         permissions.update(role.permissions)
 
     # 将权限对象转换为 PermissionDetail 响应模型
-    permissions_list = [
-        PermissionDetail.from_orm(permission) for permission in permissions
-    ]
+    permissions_list = [PermissionDetail.from_orm(permission) for permission in permissions]
 
     return ResponseModel(data=permissions_list)

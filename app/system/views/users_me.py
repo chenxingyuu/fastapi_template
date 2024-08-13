@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Security, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import User
@@ -16,12 +16,6 @@ user_me_router = APIRouter()
     "/me",
     summary="获取我的详细信息",
     response_model=ResponseModel[UserDetail],
-    dependencies=[
-        Security(
-            get_current_active_user,
-            scopes=["system:user:me:read"],
-        )
-    ],
 )
 async def get_user_me(current_user: User = Depends(get_current_active_user)):
     user_data = UserDetail.from_orm(current_user)
@@ -32,25 +26,13 @@ async def get_user_me(current_user: User = Depends(get_current_active_user)):
     "/me",
     summary="更新我的详细信息",
     response_model=ResponseModel[UserDetail],
-    dependencies=[
-        Security(
-            get_current_active_user,
-            scopes=["system:user:me:update"],
-        )
-    ],
 )
-async def update_user_me(
-    user: UserUpdate, current_user: User = Depends(get_current_active_user)
-):
+async def update_user_me(user: UserUpdate, current_user: User = Depends(get_current_active_user)):
     updated_count = (
-        await User.get_queryset()
-        .filter(id=current_user.id)
-        .update(**user.dict(exclude_unset=True))
+        await User.get_queryset().filter(id=current_user.id).update(**user.dict(exclude_unset=True))
     )
     if not updated_count:
-        raise HTTPException(
-            status_code=404, detail=f"User {current_user.id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {current_user.id} not found")
     user_obj = await User.get_queryset().get(id=current_user.id)
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
@@ -61,9 +43,6 @@ async def update_user_me(
     summary="删除自己的账号",
     response_model=ResponseModel[dict],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:me:delete"])
-    ],
 )
 async def delete_user_me(
     current_user: User = Depends(get_current_active_user),
@@ -72,13 +51,9 @@ async def delete_user_me(
     删除指定 ID 的用户。
     - **user_id**: 要删除的用户的唯一标识符。
     """
-    deleted_count = (
-        await User.get_queryset().filter(id=current_user.id).delete()
-    )
+    deleted_count = await User.get_queryset().filter(id=current_user.id).delete()
     if not deleted_count:
-        raise HTTPException(
-            status_code=404, detail=f"User {current_user.id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {current_user.id} not found")
     return ResponseModel(data={"deleted": deleted_count})
 
 
@@ -86,20 +61,12 @@ async def delete_user_me(
     "/me/roles",
     summary="获取我的角色",
     response_model=ResponseModel[List[str]],
-    dependencies=[
-        Security(
-            get_current_active_user,
-            scopes=["system:user:me:read", "system:role:me:read"],
-        )
-    ],
 )
 async def get_user_me_roles(
     current_user: User = Depends(get_current_active_user),
 ):
     # 查询用户并预加载关联的角色和权限
-    user = await User.filter(id=current_user.id).prefetch_related(
-        "roles"
-    ).first()
+    user = await User.filter(id=current_user.id).prefetch_related("roles").first()
     # 从所有角色中获取权限
     roles = [role.name for role in user.roles]
     return ResponseModel(data=roles)
@@ -109,20 +76,12 @@ async def get_user_me_roles(
     "/me/permissions",
     summary="获取我的权限",
     response_model=ResponseModel[List[str]],
-    dependencies=[
-        Security(
-            get_current_active_user,
-            scopes=["system:user:me:read", "system:permission:me:read"],
-        )
-    ],
 )
 async def get_user_me_permissions(
     current_user: User = Depends(get_current_active_user),
 ):
     # 查询用户并预加载关联的权限
-    user = await User.filter(id=current_user.id).prefetch_related(
-        "roles__permissions"
-    ).first()
+    user = await User.filter(id=current_user.id).prefetch_related("roles__permissions").first()
 
     if not user:
         return []
@@ -134,5 +93,30 @@ async def get_user_me_permissions(
             permissions.add(permission.name)
 
     filter_permissions = filter_scopes(permissions)
+
+    return ResponseModel(data=filter_permissions)
+
+
+@user_me_router.get(
+    "/me/menus",
+    summary="获取我的菜单",
+    response_model=ResponseModel[List[str]],
+)
+async def get_user_me_menus(
+    current_user: User = Depends(get_current_active_user),
+):
+    # 查询用户并预加载关联的权限
+    user = await User.filter(id=current_user.id).prefetch_related("roles__menus").first()
+
+    if not user:
+        return []
+
+    # 从所有角色中获取权限
+    menus = set()
+    for role in user.roles:
+        for menu in role.menus:
+            menus.add(menu.name)
+
+    filter_permissions = filter_scopes(menus)
 
     return ResponseModel(data=filter_permissions)

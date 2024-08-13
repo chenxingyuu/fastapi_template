@@ -8,9 +8,7 @@ class User(Model):
     hashed_password = fields.CharField(max_length=255)
     is_active = fields.BooleanField(default=True)
     is_superuser = fields.BooleanField(default=False)
-    roles = fields.ManyToManyField(
-        "models.Role", related_name="users", through="system_user_roles"
-    )
+    roles = fields.ManyToManyField("models.Role", related_name="users", through="system_user_roles")
 
     class Meta:
         table = "system_users"

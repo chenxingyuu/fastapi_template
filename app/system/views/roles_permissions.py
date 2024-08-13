@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
-from app.system.models import Role, Permission
-from app.system.serializers import RoleDetail, PermissionDetail
+from app.system.models import Permission, Role
+from app.system.serializers import PermissionDetail, RoleDetail
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 
@@ -28,17 +28,11 @@ async def get_role_permissions(role_id: int):
     根据角色 ID 获取单个角色的权限列表。
     - **role_id**: 角色的唯一标识符。
     """
-    role = (
-        await Role.get_queryset()
-        .prefetch_related("permissions")
-        .get_or_none(id=role_id)
-    )
+    role = await Role.get_queryset().prefetch_related("permissions").get_or_none(id=role_id)
     if not role:
         return ResponseModel(code=404, msg=f"Role {role} not found")
 
-    permissions_data = await PermissionDetail.from_queryset(
-        role.permissions.all()
-    )
+    permissions_data = await PermissionDetail.from_queryset(role.permissions.all())
     return ResponseModel(data=permissions_data)
 
 
@@ -61,17 +55,11 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(
-            status_code=404, detail=f"Role {role_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
 
-    permissions = (
-        await Permission.get_queryset().filter(id__in=permission_ids).all()
-    )
+    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {
-            permission.id for permission in permissions
-        }
+        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
         raise HTTPException(
             status_code=404,
             detail=f"Permissions with IDs {missing_ids} not found",
@@ -102,17 +90,11 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(
-            status_code=404, detail=f"Role {role_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
 
-    permissions = (
-        await Permission.get_queryset().filter(id__in=permission_ids).all()
-    )
+    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {
-            permission.id for permission in permissions
-        }
+        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
         raise HTTPException(
             status_code=404,
             detail=f"Permissions with IDs {missing_ids} not found",
@@ -143,17 +125,11 @@ async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
     """
     role = await Role.get_queryset().get_or_none(id=role_id)
     if not role:
-        raise HTTPException(
-            status_code=404, detail=f"Role {role_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
 
-    permissions = (
-        await Permission.get_queryset().filter(id__in=permission_ids).all()
-    )
+    permissions = await Permission.get_queryset().filter(id__in=permission_ids).all()
     if len(permissions) != len(permission_ids):
-        missing_ids = set(permission_ids) - {
-            permission.id for permission in permissions
-        }
+        missing_ids = set(permission_ids) - {permission.id for permission in permissions}
         raise HTTPException(
             status_code=404,
             detail=f"Permissions with IDs {missing_ids} not found",

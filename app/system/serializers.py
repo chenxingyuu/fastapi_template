@@ -4,17 +4,13 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.system.models import Permission, Role, User
 
-PermissionPydantic = pydantic_model_creator(
-    Permission, name="PermissionPydantic"
-)
+PermissionPydantic = pydantic_model_creator(Permission, name="PermissionPydantic")
 UserPydantic = pydantic_model_creator(
     User,
     name="UserPydantic",
     include=("id", "username", "is_active", "is_superuser"),
 )
-CreatorPydantic = pydantic_model_creator(
-    User, name="CreatorPydantic", include=("id", "username")
-)
+CreatorPydantic = pydantic_model_creator(User, name="CreatorPydantic", include=("id", "username"))
 RolePydantic = pydantic_model_creator(Role, name="RolePydantic")
 
 # ===============================================================================================
@@ -55,9 +51,7 @@ RoleDetail = pydantic_model_creator(
         "creator_id",
     ),
 )
-RoleCreate = pydantic_model_creator(
-    Role, name="RoleCreate", include=("name", "description")
-)
+RoleCreate = pydantic_model_creator(Role, name="RoleCreate", include=("name", "description"))
 RoleUpdate = RoleCreate
 RolePatch = RoleCreate
 
@@ -79,9 +73,7 @@ UserDetail = pydantic_model_creator(
     ),
 )
 
-UserCreate = pydantic_model_creator(
-    User, name="UserCreate", include=("username",)
-)
+UserCreate = pydantic_model_creator(User, name="UserCreate", include=("username",))
 
 UserUpdate = pydantic_model_creator(
     User,

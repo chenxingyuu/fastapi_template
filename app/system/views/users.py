@@ -3,12 +3,7 @@ from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.filters import ListUserFilterSet
 from app.system.models import User
-from app.system.serializers import (
-    UserCreate,
-    UserDetail,
-    UserPatch,
-    UserUpdate,
-)
+from app.system.serializers import UserCreate, UserDetail, UserPatch, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.pwd import get_password_hash
@@ -19,9 +14,7 @@ user_router = APIRouter()
 
 async def validate_user(user_id: int) -> User:
     if not (user := await User.get_queryset().get_or_none(id=user_id)):
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     return user
 
 
@@ -29,9 +22,7 @@ async def validate_user(user_id: int) -> User:
     path="",
     summary="创建用户",
     response_model=ResponseModel[UserDetail],
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:create"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:create"])],
 )
 async def create_user(user: UserCreate):
     """
@@ -40,9 +31,7 @@ async def create_user(user: UserCreate):
     """
     password = f"{user.username}@123456"
     hashed_password = get_password_hash(password)
-    user_obj = await User.create(
-        **user.dict(exclude_unset=True), hashed_password=hashed_password
-    )
+    user_obj = await User.create(**user.dict(exclude_unset=True), hashed_password=hashed_password)
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
 
@@ -51,9 +40,7 @@ async def create_user(user: UserCreate):
     "",
     summary="获取用户列表",
     response_model=ResponseModel[PageModel[UserDetail]],
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:read"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read"])],
 )
 async def list_user(
     user_filter: ListUserFilterSet = Depends(),
@@ -76,9 +63,7 @@ async def list_user(
     summary="获取用户详细信息",
     response_model=ResponseModel[UserDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:read"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:read"])],
 )
 async def get_user(user_id: int):
     """
@@ -87,9 +72,7 @@ async def get_user(user_id: int):
     """
     user = await User.get_queryset().get_or_none(id=user_id)
     if not user:
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     user_data = await UserDetail.from_tortoise_orm(user)
     return ResponseModel(data=user_data)
 
@@ -99,9 +82,7 @@ async def get_user(user_id: int):
     summary="更新用户信息",
     response_model=ResponseModel[UserDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:update"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update"])],
 )
 async def update_user(user_id: int, user: UserUpdate):
     """
@@ -111,9 +92,7 @@ async def update_user(user_id: int, user: UserUpdate):
     """
     user_obj = await User.get_queryset().get(id=user_id)
     if not user_obj:
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     await User.get_queryset().filter(id=user_id).update(**user.dict(exclude_unset=True))
 
     user_data = await UserDetail.from_tortoise_orm(user_obj)
@@ -125,9 +104,7 @@ async def update_user(user_id: int, user: UserUpdate):
     summary="部分更新用户信息",
     response_model=ResponseModel[UserDetail],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:update"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:update"])],
 )
 async def patch_user(user_id: int, user: UserPatch):
     """
@@ -136,14 +113,10 @@ async def patch_user(user_id: int, user: UserPatch):
     - **user**: 更新后的用户详细信息（仅更新提供的字段）。
     """
     updated_count = (
-        await User.get_queryset()
-        .filter(id=user_id)
-        .update(**user.dict(exclude_unset=True))
+        await User.get_queryset().filter(id=user_id).update(**user.dict(exclude_unset=True))
     )
     if not updated_count:
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     user_obj = await User.get_queryset().get(id=user_id)
     user_data = await UserDetail.from_tortoise_orm(user_obj)
     return ResponseModel(data=user_data)
@@ -154,9 +127,7 @@ async def patch_user(user_id: int, user: UserPatch):
     summary="删除用户",
     response_model=ResponseModel[dict],
     responses={404: {"model": HTTPNotFoundError}},
-    dependencies=[
-        Security(get_current_active_user, scopes=["system:user:delete"])
-    ],
+    dependencies=[Security(get_current_active_user, scopes=["system:user:delete"])],
 )
 async def delete_user(user_id: int):
     """
@@ -165,7 +136,5 @@ async def delete_user(user_id: int):
     """
     deleted_count = await User.get_queryset().filter(id=user_id).delete()
     if not deleted_count:
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     return ResponseModel(data={"deleted": deleted_count})

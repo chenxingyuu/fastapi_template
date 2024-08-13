@@ -11,9 +11,7 @@ class SoftDeleteQuerySet(QuerySet):
 
 class Model(models.Model):
     id = fields.IntField(pk=True)
-    creator = fields.ForeignKeyField(
-        "models.User", on_delete=fields.CASCADE, null=True
-    )
+    creator = fields.ForeignKeyField("models.User", on_delete=fields.CASCADE, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     deleted_at = fields.DatetimeField(default=None, null=True)

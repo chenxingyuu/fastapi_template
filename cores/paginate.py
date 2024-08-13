@@ -39,15 +39,11 @@ class PaginationParams:
         if len(self.sort_order) < len(self.sort_by):
             self.sort_order = [
                 *self.sort_order,
-                *self.sort_order[-1:]
-                * (len(self.sort_by) - len(self.sort_order)),
+                *self.sort_order[-1:] * (len(self.sort_by) - len(self.sort_order)),
             ]
 
         queryset = queryset.order_by(
-            *[
-                f"{order.desc}{field}"
-                for field, order in zip(self.sort_by, self.sort_order)
-            ]
+            *[f"{order.desc}{field}" for field, order in zip(self.sort_by, self.sort_order)]
         )
 
         return queryset

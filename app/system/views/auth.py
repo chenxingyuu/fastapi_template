@@ -1,11 +1,7 @@
 from typing import List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Security
-from fastapi.security import (
-    OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm,
-    SecurityScopes,
-)
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from passlib.exc import InvalidTokenError
 from pydantic import BaseModel, ValidationError
 from starlette import status
@@ -18,9 +14,7 @@ from cores.scope import filter_scopes, scopes
 
 auth_router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/token", scopes=scopes
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", scopes=scopes)
 
 
 class TokenData(BaseModel):
@@ -30,8 +24,7 @@ class TokenData(BaseModel):
 
 async def authenticate_user(username: str, password: str) -> bool | User:
     user = (
-        await User
-        .get_queryset()
+        await User.get_queryset()
         .prefetch_related("roles__permissions")
         .get_or_none(username=username)
     )
@@ -68,8 +61,7 @@ async def get_current_user(
         raise credentials_exception
 
     user = (
-        await User
-        .get_queryset()
+        await User.get_queryset()
         .prefetch_related("roles__permissions")
         .get_or_none(username=username)
     )
@@ -104,9 +96,7 @@ async def login_for_access_token(
 ):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(
-            status_code=400, detail="Incorrect username or password"
-        )
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     # 查询权限
     permissions = set()
@@ -116,9 +106,7 @@ async def login_for_access_token(
 
     filter_permissions = filter_scopes(permissions)
 
-    access_token = create_access_token(
-        data={"sub": user.username, "scopes": filter_permissions}
-    )
+    access_token = create_access_token(data={"sub": user.username, "scopes": filter_permissions})
     return ResponseModel(
         data=Token(
             access_token=access_token,

@@ -1,8 +1,8 @@
 from typing import List
 
-from fastapi import APIRouter, Security, HTTPException
+from fastapi import APIRouter, HTTPException, Security
 
-from app.system.models import User, Role
+from app.system.models import Role, User
 from app.system.serializers import RoleDetail
 from app.system.views.auth import get_current_active_user
 from app.system.views.users import validate_user
@@ -28,12 +28,7 @@ async def get_user_roles(user_id: int):
     获取指定用户的角色列表。
     - **user_id**: 用户的唯一标识符。
     """
-    user = (
-        await User
-        .get_queryset()
-        .prefetch_related("roles")
-        .get_or_none(id=user_id)
-    )
+    user = await User.get_queryset().prefetch_related("roles").get_or_none(id=user_id)
     if not user:
         return ResponseModel(data=[])
 

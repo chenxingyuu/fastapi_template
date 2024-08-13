@@ -52,9 +52,7 @@ def get_config_path() -> str:
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_file_path = os.getenv("CONFIG_FILE_PATH", "../config.ini")
     if not os.path.isabs(config_file_path):
-        config_file_path = os.path.abspath(
-            os.path.join(base_dir, config_file_path)
-        )
+        config_file_path = os.path.abspath(os.path.join(base_dir, config_file_path))
     return config_file_path
 
 
@@ -75,9 +73,7 @@ def read_config() -> Settings:
     mysql_config = MySQLConfig(**config["mysql"])
     redis_config = RedisConfig(**config["redis"])
     security_config = SecurityConfig(**config["security"])
-    security_config.token_expire_days = config.getint(
-        "security", "token_expire_days"
-    )
+    security_config.token_expire_days = config.getint("security", "token_expire_days")
 
     return Settings(
         app=app_config,
