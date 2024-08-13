@@ -43,7 +43,7 @@ class Menu(Model):
     locale = fields.CharField(max_length=50, null=True)
     icon = fields.CharField(max_length=50, null=True)
     requires_auth = fields.BooleanField(default=False)
-    parent = fields.ForeignKeyField("models.Menu", on_delete=fields.CASCADE)
+    parent = fields.ForeignKeyField("models.Menu", on_delete=fields.CASCADE, null=True)
 
     class Meta:
         table = "system_menus"

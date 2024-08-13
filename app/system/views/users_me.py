@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import User
-from app.system.serializers import UserDetail, UserUpdate
+from app.system.serializers import MenuDetail, UserDetail, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 from cores.scope import filter_scopes
@@ -100,7 +100,7 @@ async def get_user_me_permissions(
 @user_me_router.get(
     "/me/menus",
     summary="获取我的菜单",
-    response_model=ResponseModel[List[str]],
+    response_model=ResponseModel[List[MenuDetail]],
 )
 async def get_user_me_menus(
     current_user: User = Depends(get_current_active_user),
@@ -114,9 +114,9 @@ async def get_user_me_menus(
     # 从所有角色中获取权限
     menus = set()
     for role in user.roles:
-        for menu in role.menus:
-            menus.add(menu.name)
+        menus.update(role.menus)
 
-    filter_permissions = filter_scopes(menus)
+    # 将菜单对象转换为 PermissionDetail 响应模型
+    menu_list = [MenuDetail.from_orm(menu) for menu in menus]
 
-    return ResponseModel(data=filter_permissions)
+    return ResponseModel(data=menu_list)

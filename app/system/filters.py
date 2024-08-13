@@ -4,7 +4,7 @@ from pydantic import Field
 from tortoise.expressions import Q
 from tortoise.queryset import QuerySet
 
-from app.system.models import Permission, Role, User
+from app.system.models import Menu, Permission, Role, User
 from cores.filter import FilterSet
 
 
@@ -52,4 +52,18 @@ class ListUserFilterSet(FilterSet):
             query = query.filter(Q(is_active=self.is_active))
         if self.is_superuser is not None:
             query = query.filter(Q(is_superuser=self.is_superuser))
+        return query
+
+
+class ListMenuFilterSet(FilterSet):
+    name: Optional[str] = Field(None, description="按用户名过滤")
+    path: Optional[str] = Field(None, description="按电子邮件过滤")
+
+    def apply_filters(self, query: QuerySet[Menu] = None) -> QuerySet[Menu]:
+        if not query:
+            query = Menu.get_queryset().all()
+        if self.name:
+            query = query.filter(Q(name__icontains=self.name))
+        if self.path:
+            query = query.filter(Q(path__icontains=self.path))
         return query

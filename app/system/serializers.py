@@ -2,7 +2,7 @@
 
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-from app.system.models import Permission, Role, User
+from app.system.models import Menu, Permission, Role, User
 
 PermissionPydantic = pydantic_model_creator(Permission, name="PermissionPydantic")
 UserPydantic = pydantic_model_creator(
@@ -12,6 +12,7 @@ UserPydantic = pydantic_model_creator(
 )
 CreatorPydantic = pydantic_model_creator(User, name="CreatorPydantic", include=("id", "username"))
 RolePydantic = pydantic_model_creator(Role, name="RolePydantic")
+MenuPydantic = pydantic_model_creator(Menu, name="RolePydantic")
 
 # ===============================================================================================
 # Permission
@@ -85,3 +86,35 @@ UserPatch = pydantic_model_creator(
     name="UserPatch",
     include=("username", "is_active"),
 )
+
+MenuDetail = pydantic_model_creator(
+    Menu,
+    name="MenuDetail",
+    include=(
+        "id",
+        "name",
+        "path",
+        "component_path",
+        "locale",
+        "icon",
+        "requires_auth",
+        "parent_id",
+    ),
+)
+
+MenuCreate = pydantic_model_creator(
+    Menu,
+    name="MenuCreate",
+    include=(
+        "name",
+        "path",
+        "component_path",
+        "locale",
+        "icon",
+        "requires_auth",
+        "parent_id",
+    ),
+)
+
+MenuUpdate = MenuCreate
+MenuPatch = MenuCreate
