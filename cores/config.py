@@ -40,11 +40,18 @@ class SecurityConfig:
 
 
 @dataclass
+class GithubOAuthConfig:
+    client: str
+    secret: str
+
+
+@dataclass
 class Settings:
     app: AppConfig
     mysql: MySQLConfig
     redis: RedisConfig
     security: SecurityConfig
+    github: GithubOAuthConfig
 
 
 def get_config_path() -> str:
@@ -75,11 +82,14 @@ def read_config() -> Settings:
     security_config = SecurityConfig(**config["security"])
     security_config.token_expire_days = config.getint("security", "token_expire_days")
 
+    github_oauth_config = GithubOAuthConfig(**config["github"])
+
     return Settings(
         app=app_config,
         mysql=mysql_config,
         redis=redis_config,
         security=security_config,
+        github=github_oauth_config,
     )
 
 
