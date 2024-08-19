@@ -5,6 +5,7 @@ from cores.model import Model
 
 class User(Model):
     username = fields.CharField(max_length=50, unique=True)
+    email = fields.CharField(max_length=50, unique=True)
     hashed_password = fields.CharField(max_length=255)
     is_active = fields.BooleanField(default=True)
     is_superuser = fields.BooleanField(default=False)
