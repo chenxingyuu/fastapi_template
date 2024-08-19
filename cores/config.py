@@ -30,6 +30,7 @@ class RedisConfig:
     host: str
     port: int
     password: str
+    default_db: int
 
 
 @dataclass
