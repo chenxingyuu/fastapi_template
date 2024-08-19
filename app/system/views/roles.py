@@ -6,7 +6,7 @@ from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListRoleFilterSet
 from app.system.models import Role
-from app.system.serializers import RoleCreate, RoleDetail, RolePatch, RoleUpdate
+from app.system.serializers.roles import RoleCreate, RoleDetail, RolePatch, RoleUpdate
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel

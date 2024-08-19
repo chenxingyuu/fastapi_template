@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import User
-from app.system.serializers import MenuDetail, UserDetail, UserUpdate
+from app.system.serializers.menus import MenuDetail
+from app.system.serializers.users import  UserDetail, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 from cores.scope import filter_scopes
@@ -16,6 +17,7 @@ user_me_router = APIRouter()
     "/me",
     summary="获取我的详细信息",
     response_model=ResponseModel[UserDetail],
+    dependencies=[Security(get_current_active_user)],
 )
 async def get_user_me(current_user: User = Depends(get_current_active_user)):
     user_data = UserDetail.from_orm(current_user)

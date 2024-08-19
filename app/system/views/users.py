@@ -3,7 +3,7 @@ from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.filters import ListUserFilterSet
 from app.system.models import User
-from app.system.serializers import UserCreate, UserDetail, UserPatch, UserUpdate
+from app.system.serializers.users import UserCreate, UserDetail, UserPatch, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.pwd import get_password_hash

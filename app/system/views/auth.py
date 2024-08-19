@@ -5,16 +5,19 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, Se
 from passlib.exc import InvalidTokenError
 from pydantic import BaseModel, ValidationError
 from starlette import status
+from tortoise.expressions import Q
 
 from app.system.models import User
-from app.system.serializers import UserDetail
+from app.system.serializers.auth import OAuth2GithubRequestForm
+from app.system.serializers.users import UserDetail
 from cores.jwt import Token, create_access_token, verify_token
+from cores.oauth.github import get_access_token, get_primary_email_by_access_token
 from cores.response import ResponseModel
 from cores.scope import filter_scopes, scopes
 
 auth_router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", scopes=scopes)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/oauth2/password", scopes=scopes)
 
 
 class TokenData(BaseModel):
@@ -26,12 +29,23 @@ async def authenticate_user(username: str, password: str) -> bool | User:
     user = (
         await User.get_queryset()
         .prefetch_related("roles__permissions")
-        .get_or_none(username=username)
+        .get_or_none(Q(username=username) | Q(email=username))
     )
     if not user:
         return False
     # if not verify_password(password, user.hashed_password):
     #     return False
+    return user
+
+
+async def authenticate_user_by_oauth(username: str) -> bool | User:
+    user = (
+        await User.get_queryset()
+        .prefetch_related("roles__permissions")
+        .get_or_none(Q(username=username) | Q(email=username))
+    )
+    if not user:
+        return False
     return user
 
 
@@ -90,8 +104,8 @@ async def get_current_active_user(
     raise HTTPException(status_code=400, detail="Inactive user")
 
 
-@auth_router.post("/token", response_model=ResponseModel[Token])
-async def login_for_access_token(
+@auth_router.post("/password", response_model=ResponseModel[Token])
+async def login_from_password(
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     user = await authenticate_user(form_data.username, form_data.password)
@@ -110,7 +124,66 @@ async def login_for_access_token(
     return ResponseModel(
         data=Token(
             access_token=access_token,
-            token_type="Bearer",
+            token_type="bearer",
+            scopes=filter_permissions,
+        )
+    )
+
+
+@auth_router.post("/oauth2/password", response_model=Token)
+async def login_from_oauth2_password(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    # 查询权限
+    permissions = set()
+    for role in user.roles:
+        for permission in role.permissions:
+            permissions.add(permission.name)
+
+    permissions &= set(form_data.scopes)
+    if len(permissions) < len(form_data.scopes):
+        raise HTTPException(status_code=400, detail=f"Incorrect permission {set(form_data.scopes) - permissions}")
+
+    filter_permissions = filter_scopes(permissions)
+
+    access_token = create_access_token(data={"sub": user.username, "scopes": filter_permissions})
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        scopes=filter_permissions,
+    )
+
+
+@auth_router.post("/oauth2/github", response_model=ResponseModel[Token])
+async def login_from_oauth2_github(
+    form_data: OAuth2GithubRequestForm,
+):
+    # 通过code获取access token
+    token = await get_access_token(form_data.code)
+    # 通过access token获取邮箱
+    primary_email = await get_primary_email_by_access_token(token)
+    # 通过email查询用户
+    user = await authenticate_user_by_oauth(primary_email.email)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    # 查询用户权限
+    permissions = set()
+    for role in user.roles:
+        for permission in role.permissions:
+            permissions.add(permission.name)
+
+    filter_permissions = filter_scopes(permissions)
+
+    access_token = create_access_token(data={"sub": user.username, "scopes": filter_permissions})
+    return ResponseModel(
+        data=Token(
+            access_token=access_token,
+            token_type="bearer",
             scopes=filter_permissions,
         )
     )

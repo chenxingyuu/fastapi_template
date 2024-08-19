@@ -7,7 +7,7 @@ from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListPermissionFilterSet
 from app.system.models import Permission, User
-from app.system.serializers import (
+from app.system.serializers.permission import (
     PermissionCreate,
     PermissionDetail,
     PermissionPatch,

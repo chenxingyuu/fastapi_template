@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Security
 
 from app.system.models import Role, User
-from app.system.serializers import RoleDetail
+from app.system.serializers.roles import RoleDetail
 from app.system.views.auth import get_current_active_user
 from app.system.views.users import validate_user
 from cores.response import ResponseModel

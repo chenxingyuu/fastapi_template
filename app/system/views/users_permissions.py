@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Security
 
 from app.system.models import User
-from app.system.serializers import PermissionDetail
+from app.system.serializers.permission import PermissionDetail
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 

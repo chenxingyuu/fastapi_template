@@ -4,7 +4,8 @@ from fastapi import APIRouter, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import Permission, Role
-from app.system.serializers import PermissionDetail, RoleDetail
+from app.system.serializers.permission import PermissionDetail
+from app.system.serializers.roles import RoleDetail
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 
