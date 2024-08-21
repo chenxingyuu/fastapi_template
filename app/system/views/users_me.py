@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
-from app.system.models import User
-from app.system.serializers.menus import MenuDetail
+from app.system.models import User, Menu
+from app.system.serializers.menus import MenuDetail, MenuDetailTree
 from app.system.serializers.users import  UserDetail, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
@@ -17,7 +17,6 @@ user_me_router = APIRouter()
     "/me",
     summary="获取我的详细信息",
     response_model=ResponseModel[UserDetail],
-    dependencies=[Security(get_current_active_user)],
 )
 async def get_user_me(current_user: User = Depends(get_current_active_user)):
     user_data = UserDetail.from_orm(current_user)
@@ -102,23 +101,14 @@ async def get_user_me_permissions(
 @user_me_router.get(
     "/me/menus",
     summary="获取我的菜单",
-    response_model=ResponseModel[List[MenuDetail]],
+    response_model=ResponseModel[List[MenuDetailTree]],
 )
 async def get_user_me_menus(
     current_user: User = Depends(get_current_active_user),
 ):
-    # 查询用户并预加载关联的权限
-    user = await User.filter(id=current_user.id).prefetch_related("roles__menus").first()
+    query = Menu.get_queryset().filter(roles__users__id=current_user.id)
+    menus = await MenuDetail.from_queryset(query)
 
-    if not user:
-        return []
+    tree = MenuDetailTree.from_menu_list(menus=menus)
 
-    # 从所有角色中获取权限
-    menus = set()
-    for role in user.roles:
-        menus.update(role.menus)
-
-    # 将菜单对象转换为 PermissionDetail 响应模型
-    menu_list = [MenuDetail.from_orm(menu) for menu in menus]
-
-    return ResponseModel(data=menu_list)
+    return ResponseModel(data=tree)

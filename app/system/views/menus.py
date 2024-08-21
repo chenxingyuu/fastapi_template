@@ -7,7 +7,7 @@ from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListMenuFilterSet
 from app.system.models import Menu, User
-from app.system.serializers.menus import MenuDetail, MenuCreate, MenuUpdate, MenuPatch
+from app.system.serializers.menus import MenuDetail, MenuCreate, MenuUpdate, MenuPatch, MenuDetailTree
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel
@@ -56,7 +56,7 @@ async def list_menus(
     "/all",
     summary="获取所有权限列表",
     response_model=ResponseModel[List[MenuDetail]],
-    dependencies=[Security(get_current_active_user, scopes=["system:Menu:read"])],
+    dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
 )
 async def all_menus(
     menu_filter: ListMenuFilterSet = Depends(),
@@ -65,8 +65,28 @@ async def all_menus(
     获取所有权限的列表，可以按名称和描述进行搜索。
     """
     query = menu_filter.apply_filters()
-    Menus = await MenuDetail.from_queryset(query)
-    return ResponseModel(data=Menus)
+    menus = await MenuDetail.from_queryset(query)
+    return ResponseModel(data=menus)
+
+
+@menu_router.get(
+    "/all/tree",
+    summary="获取所有权限列表(树形返回)",
+    response_model=ResponseModel[List[MenuDetailTree]],
+    dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
+)
+async def all_menus_tree(
+    menu_filter: ListMenuFilterSet = Depends(),
+):
+    """
+    获取所有权限的列表，可以按名称和描述进行搜索，以树形结构返回。
+    """
+    query = menu_filter.apply_filters()
+    menus = await MenuDetail.from_queryset(query)
+
+    tree = MenuDetailTree.from_menu_list(menus=menus)
+
+    return ResponseModel(data=tree)
 
 
 @menu_router.get(
