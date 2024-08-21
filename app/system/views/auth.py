@@ -146,7 +146,9 @@ async def login_from_oauth2_password(
 
     permissions &= set(form_data.scopes)
     if len(permissions) < len(form_data.scopes):
-        raise HTTPException(status_code=400, detail=f"Incorrect permission {set(form_data.scopes) - permissions}")
+        raise HTTPException(
+            status_code=400, detail=f"Incorrect permission {set(form_data.scopes) - permissions}"
+        )
 
     filter_permissions = filter_scopes(permissions)
 

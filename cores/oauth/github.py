@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from app.system.serializers.auth import GithubToken, GithubEmail
+from app.system.serializers.auth import GithubEmail, GithubToken
 from cores.async_http import async_http_request
 from cores.config import settings
 
@@ -16,7 +16,7 @@ async def get_access_token(code: str) -> GithubToken:
             "client_id": settings.github.client,
             "client_secret": settings.github.secret,
             "code": code,
-        }
+        },
     )
     json_data = response.json()
     return GithubToken(**json_data)
@@ -27,7 +27,7 @@ async def get_emails_by_access_token(token: GithubToken) -> List[GithubEmail]:
         url=emails_api,
         headers={
             "Accept": "application/json",
-            "Authorization": f"{token.token_type} {token.access_token}"
+            "Authorization": f"{token.token_type} {token.access_token}",
         },
     )
     json_data = response.json()

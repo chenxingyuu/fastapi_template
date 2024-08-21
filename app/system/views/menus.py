@@ -7,7 +7,13 @@ from tortoise.exceptions import DoesNotExist
 
 from app.system.filters import ListMenuFilterSet
 from app.system.models import Menu, User
-from app.system.serializers.menus import MenuDetail, MenuCreate, MenuUpdate, MenuPatch, MenuDetailTree
+from app.system.serializers.menus import (
+    MenuCreate,
+    MenuDetail,
+    MenuDetailTree,
+    MenuPatch,
+    MenuUpdate,
+)
 from app.system.views.auth import get_current_active_user
 from cores.paginate import PageModel, PaginationParams, paginate
 from cores.response import ResponseModel

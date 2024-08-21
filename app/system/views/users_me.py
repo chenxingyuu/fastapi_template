@@ -3,9 +3,9 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Security
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
-from app.system.models import User, Menu
+from app.system.models import Menu, User
 from app.system.serializers.menus import MenuDetail, MenuDetailTree
-from app.system.serializers.users import  UserDetail, UserUpdate
+from app.system.serializers.users import UserDetail, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 from cores.scope import filter_scopes

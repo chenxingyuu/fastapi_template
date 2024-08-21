@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Mapping, Union, IO
+from typing import IO, Any, Dict, Mapping, Optional, Union
 from urllib.parse import parse_qs
 
 import httpx
@@ -31,7 +31,14 @@ async def async_http_request(
     async with httpx.AsyncClient() as client:
         try:
             response = await client.request(
-                method, url, headers=headers, params=params, json=json, files=files, data=data, timeout=timeout
+                method,
+                url,
+                headers=headers,
+                params=params,
+                json=json,
+                files=files,
+                data=data,
+                timeout=timeout,
             )
             response.raise_for_status()
             _log_response(response)
