@@ -40,11 +40,15 @@ class Permission(Model):
 class Menu(Model):
     name = fields.CharField(max_length=50, unique=True)
     path = fields.CharField(max_length=50, unique=True)
-    component_path = fields.CharField(max_length=50)
-    locale = fields.CharField(max_length=50, null=True)
-    icon = fields.CharField(max_length=50, null=True)
-    requires_auth = fields.BooleanField(default=False)
-    order_no = fields.IntField(default=0)
+    component = fields.CharField(max_length=50)
+    meta_locale = fields.CharField(max_length=50, null=True)
+    meta_icon = fields.CharField(max_length=50, null=True)
+    meta_requires_auth = fields.BooleanField(default=False)
+    meta_order = fields.IntField(default=0)
+    meta_hide_in_menu = fields.BooleanField(default=False)
+    meta_hide_children_menu = fields.BooleanField(default=False)
+    meta_no_affix = fields.BooleanField(default=False)
+    meta_ignore_cache = fields.BooleanField(default=False)
     parent = fields.ForeignKeyField("models.Menu", on_delete=fields.CASCADE, null=True)
 
     class Meta:
