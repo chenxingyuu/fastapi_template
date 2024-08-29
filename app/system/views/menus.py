@@ -23,7 +23,7 @@ menu_router = APIRouter()
 
 @menu_router.post(
     "",
-    summary="创建权限",
+    summary="创建菜单",
     response_model=ResponseModel[MenuDetail],
     dependencies=[Security(get_current_active_user, scopes=["system:menu:create"])],
 )
@@ -32,8 +32,8 @@ async def create_menu(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    创建一个新的权限。
-    - **Menu**: 要创建的权限的详细信息。
+    创建一个新的菜单。
+    - **Menu**: 要创建的菜单的详细信息。
     """
     menu_obj = await Menu.create(**menu.dict(), creator_id=current_user.id)
     response = await MenuDetail.from_tortoise_orm(menu_obj)
@@ -42,7 +42,7 @@ async def create_menu(
 
 @menu_router.get(
     "",
-    summary="获取权限列表",
+    summary="获取菜单列表",
     response_model=ResponseModel[PageModel[MenuDetail]],
     dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
 )
@@ -51,7 +51,7 @@ async def list_menus(
     pagination: PaginationParams = Depends(),
 ):
     """
-    获取所有权限的列表，可以按名称和描述进行搜索。
+    获取所有菜单的列表，可以按名称和描述进行搜索。
     """
     query = menu_filter.apply_filters()
     page_data = await paginate(query, pagination, MenuDetail)
@@ -60,7 +60,7 @@ async def list_menus(
 
 @menu_router.get(
     "/all",
-    summary="获取所有权限列表",
+    summary="获取所有菜单列表",
     response_model=ResponseModel[List[MenuDetail]],
     dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
 )
@@ -68,7 +68,7 @@ async def all_menus(
     menu_filter: ListMenuFilterSet = Depends(),
 ):
     """
-    获取所有权限的列表，可以按名称和描述进行搜索。
+    获取所有菜单的列表，可以按名称和描述进行搜索。
     """
     query = menu_filter.apply_filters()
     menus = await MenuDetail.from_queryset(query)
@@ -77,7 +77,7 @@ async def all_menus(
 
 @menu_router.get(
     "/all/tree",
-    summary="获取所有权限列表(树形返回)",
+    summary="获取所有菜单列表(树形返回)",
     response_model=ResponseModel[List[MenuDetailTree]],
     dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
 )
@@ -85,27 +85,28 @@ async def all_menus_tree(
     menu_filter: ListMenuFilterSet = Depends(),
 ):
     """
-    获取所有权限的列表，可以按名称和描述进行搜索，以树形结构返回。
+    获取所有菜单的列表，可以按名称和描述进行搜索，以树形结构返回。
     """
-    query = menu_filter.apply_filters()
-    menus = await MenuDetail.from_queryset(query)
+    menus = await menu_filter.apply_filters()
 
     tree = MenuDetailTree.from_menu_list(menus=menus)
 
     return ResponseModel(data=tree)
 
 
+
+
 @menu_router.get(
     "/{menu_id}",
-    summary="获取权限详细信息",
+    summary="获取菜单详细信息",
     response_model=ResponseModel[MenuDetail],
     responses={404: {"model": HTTPNotFoundError}},
     dependencies=[Security(get_current_active_user, scopes=["system:menu:read"])],
 )
 async def get_menu(menu_id: int):
     """
-    根据权限 ID 获取单个权限的详细信息。
-    - **menu_id**: 权限的唯一标识符。
+    根据菜单 ID 获取单个菜单的详细信息。
+    - **menu_id**: 菜单的唯一标识符。
     """
     try:
         menu = Menu.get_queryset().get(id=menu_id)
@@ -117,16 +118,16 @@ async def get_menu(menu_id: int):
 
 @menu_router.put(
     "/{menu_id}",
-    summary="更新权限信息",
+    summary="更新菜单信息",
     response_model=ResponseModel[MenuDetail],
     responses={404: {"model": HTTPNotFoundError}},
     dependencies=[Security(get_current_active_user, scopes=["system:menu:update"])],
 )
 async def update_menu(menu_id: int, menu: MenuUpdate):
     """
-    更新指定 ID 权限的信息。
-    - **menu_id**: 要更新的权限的唯一标识符。
-    - **menu**: 更新后的权限详细信息。
+    更新指定 ID 菜单的信息。
+    - **menu_id**: 要更新的菜单的唯一标识符。
+    - **menu**: 更新后的菜单详细信息。
     """
     menu_obj = await Menu.get_queryset().get_or_none(id=menu_id)
     if not menu_obj:
@@ -140,16 +141,16 @@ async def update_menu(menu_id: int, menu: MenuUpdate):
 
 @menu_router.patch(
     "/{menu_id}",
-    summary="部分更新权限信息",
+    summary="部分更新菜单信息",
     response_model=ResponseModel[MenuDetail],
     responses={404: {"model": HTTPNotFoundError}},
     dependencies=[Security(get_current_active_user, scopes=["system:menu:update"])],
 )
 async def patch_menu(menu_id: int, menu: MenuPatch):
     """
-    部分更新指定 ID 权限的信息。
-    - **menu_id**: 要更新的权限的唯一标识符。
-    - **menu**: 更新后的权限详细信息（仅更新提供的字段）。
+    部分更新指定 ID 菜单的信息。
+    - **menu_id**: 要更新的菜单的唯一标识符。
+    - **menu**: 更新后的菜单详细信息（仅更新提供的字段）。
     """
     menu_obj = await Menu.get_queryset().get_or_none(id=menu_id)
     if not menu_obj:
@@ -163,15 +164,15 @@ async def patch_menu(menu_id: int, menu: MenuPatch):
 
 @menu_router.delete(
     "/{menu_id}",
-    summary="删除权限",
+    summary="删除菜单",
     response_model=ResponseModel[dict],
     responses={404: {"model": HTTPNotFoundError}},
     dependencies=[Security(get_current_active_user, scopes=["system:menu:delete"])],
 )
 async def delete_menu(menu_id: int):
     """
-    逻辑删除指定 ID 的权限。
-    - **menu_id**: 要删除的权限的唯一标识符。
+    逻辑删除指定 ID 的菜单。
+    - **menu_id**: 要删除的菜单的唯一标识符。
     """
     try:
         menu = await Menu.get_queryset().get(id=menu_id)

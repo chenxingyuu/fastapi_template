@@ -1,10 +1,10 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi import APIRouter, Depends, HTTPException
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import Menu, User
-from app.system.serializers.menus import MenuDetail, MenuDetailTree
+from app.system.serializers.menus import MenuDetailTree
 from app.system.serializers.users import UserDetail, UserUpdate
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
@@ -106,9 +106,6 @@ async def get_user_me_permissions(
 async def get_user_me_menus(
     current_user: User = Depends(get_current_active_user),
 ):
-    query = Menu.get_queryset().filter(roles__users__id=current_user.id)
-    menus = await MenuDetail.from_queryset(query)
-
+    menus = await Menu.get_queryset().filter(roles__users__id=current_user.id)
     tree = MenuDetailTree.from_menu_list(menus=menus)
-
     return ResponseModel(data=tree)

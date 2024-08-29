@@ -1,8 +1,33 @@
 from typing import List, Optional
 
+from pydantic import BaseModel, Field
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.system.models import Menu
+
+
+class MenuMeta(BaseModel):
+    locale: Optional[str] = Field(default=None)
+    icon: Optional[str] = Field(default=None)
+    requires_auth: bool = Field(default=False)
+    order: int = Field(default=0)
+    hide_in_menu: bool = Field(default=False)
+    hide_children_in_menu: bool = Field(default=False)
+    no_affix: bool = Field(default=False)
+    ignore_cache: bool = Field(default=False)
+
+
+class MenuDetail2(BaseModel):
+    id: int
+    name: str
+    path: str
+    components: str
+    meta: MenuMeta
+    parent_id: Optional[int] = Field(default=0)
+
+    class Config:
+        from_attributes = True
+
 
 MenuDetail = pydantic_model_creator(
     Menu,
@@ -11,20 +36,44 @@ MenuDetail = pydantic_model_creator(
         "id",
         "name",
         "path",
-        "component_path",
-        "locale",
-        "icon",
-        "requires_auth",
+        "components",
+        "meta_locale",
+        "meta_icon",
+        "meta_requires_auth",
+        "meta_order",
+        "meta_hide_in_menu",
+        "meta_hide_children_in_menu",
+        "meta_no_affix",
+        "meta_ignore_cache",
         "parent_id",
     ),
 )
 
 
-class MenuDetailTree(MenuDetail):
+class MenuDetailTree(MenuDetail2):
     children: Optional[List["MenuDetailTree"]] = []
 
     @classmethod
-    def from_menu_list(cls, menus: List[MenuDetail]) -> List["MenuDetailTree"]:
+    def from_menu_list(cls, menus: List[Menu]) -> List["MenuDetailTree"]:
+        menus = [
+            MenuDetail2(
+                id=menu.id,
+                name=menu.name,
+                path=menu.path,
+                components=menu.components,
+                parent_id=menu.parent_id,
+                meta=MenuMeta(
+                    locale=menu.meta_locale,
+                    icon=menu.meta_icon,
+                    requires_auth=menu.meta_requires_auth,
+                    order=menu.meta_order,
+                    hide_in_menu=menu.meta_hide_in_menu,
+                    hide_children_in_menu=menu.meta_hide_children_in_menu,
+                    no_affix=menu.meta_no_affix,
+                    ignore_cache=menu.meta_ignore_cache,
+                ),
+            ) for menu in menus]
+
         menu_dict = {menu.id: cls.from_orm(menu) for menu in menus}
         tree = []
 
@@ -45,10 +94,15 @@ MenuCreate = pydantic_model_creator(
     include=(
         "name",
         "path",
-        "component_path",
-        "locale",
-        "icon",
-        "requires_auth",
+        "components",
+        "meta_locale",
+        "meta_icon",
+        "meta_requires_auth",
+        "meta_order",
+        "meta_hide_in_menu",
+        "meta_hide_children_in_menu",
+        "meta_no_affix",
+        "meta_ignore_cache",
         "parent_id",
     ),
 )
