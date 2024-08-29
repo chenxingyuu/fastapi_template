@@ -11,5 +11,6 @@ services:
         condition: on-failure
     restart: always
     volumes:
+      - /data/projects/fastapi_template/:/app/:rw
       - ./config.ini:/app/config.ini
     command: ["python", "main.py"]
