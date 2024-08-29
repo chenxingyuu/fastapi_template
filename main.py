@@ -5,11 +5,10 @@ from typing import AsyncIterator
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from tortoise import Tortoise
 from tortoise.contrib.fastapi import register_tortoise
 
 from cores.config import settings
-from cores.model import TORTOISE_ORM
+from cores.model import TORTOISE_ORM, init_db, close_db
 from cores.scope import init_scopes
 
 logging.basicConfig(level=logging.DEBUG)
@@ -18,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # 应用启动时的初始化
-    await Tortoise.init(config=TORTOISE_ORM)
+    await init_db()
     # 在这里注册 Tortoise，以确保在路由中使用 Tortoise 之前数据库已经初始化
     register_tortoise(
         app,
@@ -36,7 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.include_router(system_router, prefix=settings.app.api_version)
     yield
     # 应用关闭时的清理
-    await Tortoise.close_connections()
+    await close_db()
 
 
 app = FastAPI(
