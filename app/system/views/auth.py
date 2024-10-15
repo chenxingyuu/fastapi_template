@@ -12,6 +12,7 @@ from app.system.serializers.auth import OAuth2GithubRequestForm
 from app.system.serializers.users import UserDetail
 from cores.jwt import Token, create_access_token, verify_token
 from cores.oauth.github import get_access_token, get_primary_email_by_access_token
+from cores.pwd import verify_password
 from cores.response import ResponseModel
 from cores.scope import filter_scopes, scopes
 
@@ -33,8 +34,8 @@ async def authenticate_user(username: str, password: str) -> bool | User:
     )
     if not user:
         return False
-    # if not verify_password(password, user.hashed_password):
-    #     return False
+    if not verify_password(password, user.hashed_password):
+        return False
     return user
 
 
