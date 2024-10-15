@@ -25,20 +25,21 @@ class Model(models.Model):
 
 
 TORTOISE_ORM = {
-    "connections": {"default": {
-        "engine": "tortoise.backends.mysql",
-        "credentials": {
-            "host": settings.mysql.host,
-            "port": settings.mysql.port,
-            "user": settings.mysql.user,
-            "password": settings.mysql.password,
-            "database": settings.mysql.database,
-            "maxsize": 100,  # 最大连接数
-            "minsize": 1,  # 最小连接数
-            "connect_timeout": 10.0,  # 连接超时时间
-            "charset": "utf8mb4",
-        },
-    }},
+    "connections": {
+        "default": {
+            "engine": "tortoise.backends.mysql",
+            "credentials": {
+                "host": settings.mysql.host,
+                "port": settings.mysql.port,
+                "user": settings.mysql.user,
+                "password": settings.mysql.password,
+                "database": settings.mysql.database,
+                "maxsize": 10,  # 最大连接数
+                "minsize": 1,  # 最小连接数
+                "connect_timeout": 15,  # 连接超时时间
+                "charset": "utf8mb4",
+            },
+        }},
     "apps": {
         "models": {
             "models": [
