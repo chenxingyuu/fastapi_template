@@ -5,7 +5,6 @@ from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.system.models import Permission, Role
 from app.system.serializers.permission import PermissionDetail
-from app.system.serializers.roles import RoleDetail
 from app.system.views.auth import get_current_active_user
 from cores.response import ResponseModel
 
@@ -31,7 +30,7 @@ async def get_role_permissions(role_id: int):
     """
     role = await Role.get_queryset().prefetch_related("permissions").get_or_none(id=role_id)
     if not role:
-        return ResponseModel(code=404, msg=f"Role {role} not found")
+        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
 
     permissions_data = await PermissionDetail.from_queryset(role.permissions.all())
     return ResponseModel(data=permissions_data)
@@ -40,7 +39,7 @@ async def get_role_permissions(role_id: int):
 @role_permission_router.post(
     "/{role_id}/permissions",
     summary="为角色添加权限",
-    response_model=ResponseModel[RoleDetail],
+    response_model=ResponseModel,
     dependencies=[
         Security(
             get_current_active_user,
@@ -65,17 +64,15 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
             status_code=404,
             detail=f"Permissions with IDs {missing_ids} not found",
         )
-
-    await role.permissions.add(*permissions)
-    updated_role = Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    permissions_need_add = [permission for permission in permissions if permission not in role.permissions]
+    await role.permissions.add(*permissions_need_add)
+    return ResponseModel()
 
 
 @role_permission_router.delete(
     "/{role_id}/permissions",
     summary="删除角色权限",
-    response_model=ResponseModel[RoleDetail],
+    response_model=ResponseModel,
     dependencies=[
         Security(
             get_current_active_user,
@@ -102,15 +99,13 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
         )
 
     await role.permissions.remove(*permissions)
-    updated_role = await Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    return ResponseModel()
 
 
 @role_permission_router.put(
     "/{role_id}/permissions",
     summary="修改角色权限",
-    response_model=ResponseModel[RoleDetail],
+    response_model=ResponseModel,
     dependencies=[
         Security(
             get_current_active_user,
@@ -138,6 +133,4 @@ async def update_permissions_for_role(role_id: int, permission_ids: List[int]):
 
     await role.permissions.clear()
     await role.permissions.add(*permissions)
-    updated_role = Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    return ResponseModel()

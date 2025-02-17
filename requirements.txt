@@ -1,10 +1,33 @@
+# 基础工具
 ghkit==0.0.3
-fastapi==0.111.0
-tortoise-orm==0.21.5
-uvicorn==0.30.1
 pre-commit==3.5.0
-aiomysql==0.2.0
+schedule~=1.2.2
+
+# Web框架与相关工具
+fastapi~=0.108.0
+uvicorn==0.30.1
+starlette~=0.32.0.post1
+websockets~=13.1
+python-socketio==5.11.4
+fastapi-socketio==0.0.10
+python-multipart==0.0.18
+
+# ORM和数据验证
+tortoise-orm==0.21.5
 aerich==0.7.2
+pydantic~=2.9.2
+
+# 数据库驱动
+aiomysql==0.2.0
+pymysql==1.1.1
+redis==5.2.0
+
+# HTTP客户端
+httpx~=0.27.2
+requests==2.32.3
+
+# 加密与认证
+bcrypt==3.1.7
 passlib==1.7.4
 python-jose==3.3.0
-bcrypt==3.1.7
+cryptography==43.0.3

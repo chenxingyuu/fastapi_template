@@ -3,7 +3,7 @@ from typing import List, Union
 from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from passlib.exc import InvalidTokenError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, Field
 from starlette import status
 from tortoise.expressions import Q
 
@@ -11,7 +11,7 @@ from app.system.models import User
 from app.system.serializers.auth import OAuth2GithubRequestForm
 from app.system.serializers.users import UserDetail
 from cores.jwt import Token, create_access_token, verify_token
-from cores.oauth.github import get_access_token, get_primary_email_by_access_token
+from cores.oauth.github import get_primary_email_by_access_token, get_access_token
 from cores.pwd import verify_password
 from cores.response import ResponseModel
 from cores.scope import filter_scopes, scopes
@@ -23,10 +23,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/oauth2/password", sc
 
 class TokenData(BaseModel):
     username: Union[str, None] = None
-    scopes: List[str] = []
+    scopes: List[str] = Field(default_factory=list)
 
 
-async def authenticate_user(username: str, password: str) -> bool | User:
+async def authenticate_user(username: str, password: str) -> Union[bool, User]:
     user = (
         await User.get_queryset()
         .prefetch_related("roles__permissions")
@@ -39,7 +39,7 @@ async def authenticate_user(username: str, password: str) -> bool | User:
     return user
 
 
-async def authenticate_user_by_oauth(username: str) -> bool | User:
+async def authenticate_user_by_oauth(username: str) -> Union[bool, User]:
     user = (
         await User.get_queryset()
         .prefetch_related("roles__permissions")
@@ -75,11 +75,7 @@ async def get_current_user(
     except (InvalidTokenError, ValidationError):
         raise credentials_exception
 
-    user = (
-        await User.get_queryset()
-        .prefetch_related("roles__permissions")
-        .get_or_none(username=username)
-    )
+    user = await User.get_queryset().get_or_none(username=username)
     if user is None:
         raise credentials_exception
 
@@ -190,3 +186,8 @@ async def login_from_oauth2_github(
             scopes=filter_permissions,
         )
     )
+
+
+@auth_router.post("/logout", response_model=ResponseModel)
+async def logout():
+    return ResponseModel()

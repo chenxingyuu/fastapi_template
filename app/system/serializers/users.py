@@ -8,24 +8,22 @@ UserDetail = pydantic_model_creator(
     include=(
         "id",
         "username",
+        "email",
         "is_active",
-        "is_superuser",
         "created_at",
-        "updated_at",
-        "deleted_at",
-        "creator_id",
     ),
 )
 
-UserCreate = pydantic_model_creator(User, name="UserCreate", include=("username",))
+UserCreate = pydantic_model_creator(User, name="UserCreate", include=("username", "email"))
 
 UserUpdate = pydantic_model_creator(
     User,
     name="UserUpdate",
-    include=("username", "is_active"),
+    include=("username", "email", "is_active"),
 )
+
 UserPatch = pydantic_model_creator(
     User,
     name="UserPatch",
-    include=("username", "is_active"),
+    include=("username", "email", "is_active"),
 )

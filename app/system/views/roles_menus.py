@@ -31,7 +31,7 @@ async def get_role_menus(role_id: int):
     """
     role = await Role.get_queryset().prefetch_related("menus").get_or_none(id=role_id)
     if not role:
-        return ResponseModel(code=404, msg=f"Role {role} not found")
+        raise HTTPException(status_code=404, detail=f"Role {role_id} not found")
 
     menus_data = await MenuDetail.from_queryset(role.menus.all())
     return ResponseModel(data=menus_data)
@@ -65,17 +65,15 @@ async def add_permission_to_role(role_id: int, permission_ids: List[int]):
             status_code=404,
             detail=f"Menus with IDs {missing_ids} not found",
         )
-
-    await role.menus.add(*menus)
-    updated_role = Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    menus_need_add = [menu for menu in menus if menu not in role.menus]
+    await role.menus.add(*menus_need_add)
+    return ResponseModel()
 
 
 @role_menu_router.delete(
     "/{role_id}/menus",
     summary="删除角色菜单",
-    response_model=ResponseModel[RoleDetail],
+    response_model=ResponseModel,
     dependencies=[
         Security(
             get_current_active_user,
@@ -102,15 +100,13 @@ async def delete_permission_from_role(role_id: int, permission_ids: List[int]):
         )
 
     await role.menus.remove(*menus)
-    updated_role = await Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    return ResponseModel()
 
 
 @role_menu_router.put(
     "/{role_id}/menus",
     summary="修改角色菜单",
-    response_model=ResponseModel[RoleDetail],
+    response_model=ResponseModel,
     dependencies=[
         Security(
             get_current_active_user,
@@ -138,6 +134,4 @@ async def update_menus_for_role(role_id: int, permission_ids: List[int]):
 
     await role.menus.clear()
     await role.menus.add(*menus)
-    updated_role = Role.get_queryset().get(id=role_id)
-    response = await RoleDetail.from_queryset_single(updated_role)
-    return ResponseModel(data=response)
+    return ResponseModel()

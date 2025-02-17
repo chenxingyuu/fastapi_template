@@ -7,8 +7,9 @@ from dataclasses import dataclass
 class AppConfig:
     project_name: str = "My FastAPI Project"
     api_version: str = "/api/v1"
+    doc_path: str = "/docs"
     debug: bool = False
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8000
 
 
@@ -24,6 +25,10 @@ class MySQLConfig:
     def db_url(self):
         return f"mysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
+    @property
+    def db_url_pymysql(self):
+        return f'mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
+
 
 @dataclass
 class RedisConfig:
@@ -31,6 +36,10 @@ class RedisConfig:
     port: int
     password: str
     default_db: int
+
+    @property
+    def db_url(self):
+        return f"redis://:{self.password}@{self.host}:{self.port}/{self.default_db}"
 
 
 @dataclass

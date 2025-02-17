@@ -34,8 +34,7 @@ init-db:
 
 # 生成新的迁移文件，必须提供迁移名称
 migrate:
-	@read -p "Enter migration name: " name; \
-	aerich migrate --name $$name
+	aerich migrate
 
 # 应用所有未应用的迁移
 upgrade:
